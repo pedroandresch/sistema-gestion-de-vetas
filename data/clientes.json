@@ -1,0 +1,16 @@
+[
+  {
+    "dpi": "2541896320101",
+    "nombre": "Carlos Estuardo Gómez",
+    "direccion": "Zona 10, Ciudad de Guatemala",
+    "fechaNacimiento": "1992-05-14",
+    "tipo": "VIP"
+  },
+  {
+    "dpi": "1894563210101",
+    "nombre": "María Fernanda López",
+    "direccion": "Zona 14, Ciudad de Guatemala",
+    "fechaNacimiento": "1998-11-20",
+    "tipo": "REGULAR"
+  }
+]

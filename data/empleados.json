@@ -1,0 +1,18 @@
+[
+  {
+    "idEmpleado": "EMP-01",
+    "puesto": "Jefe de Almacén",
+    "salario": 7500.00,
+    "dpi": "3012457890101",
+    "nombre": "Roberto Morales",
+    "direccion": "Zona 7, Mixco"
+  },
+  {
+    "idEmpleado": "EMP-02",
+    "puesto": "Encargado de Despacho",
+    "salario": 4800.00,
+    "dpi": "2987145230101",
+    "nombre": "Andrea Castillo",
+    "direccion": "Zona 11, Las Charcas"
+  }
+]

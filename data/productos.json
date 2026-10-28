@@ -1,0 +1,30 @@
+[
+  {
+    "codigo": "PROD-001",
+    "nombre": "Laptop ThinkPad L14",
+    "descripcion": "Intel Core i7, 16GB RAM, 512GB SSD",
+    "marca": "Lenovo",
+    "precio": 6500.00
+  },
+  {
+    "codigo": "PROD-002",
+    "nombre": "Monitor Gamer 27\"",
+    "descripcion": "IPS 165Hz 1ms QHD",
+    "marca": "LG",
+    "precio": 2200.00
+  },
+  {
+    "codigo": "PROD-003",
+    "nombre": "Teclado Mecánico RGB",
+    "descripcion": "Switches Red silenciosos",
+    "marca": "Redragon",
+    "precio": 450.00
+  },
+  {
+    "codigo": "PROD-004",
+    "nombre": "Mouse Inalámbrico MX Master 3S",
+    "descripcion": "Sensor óptico 8000 DPI",
+    "marca": "Logitech",
+    "precio": 780.00
+  }
+]
