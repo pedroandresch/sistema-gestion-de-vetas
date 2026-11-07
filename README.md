@@ -1,74 +1,65 @@
 # Sistema de Gestión de Inventario y Ventas
 
-## 1. Resumen del Proyecto
+Proyecto de escritorio desarrollado en **Java 21** para el curso de **Programación Orientada a Objetos**. Implementa una arquitectura **Modelo-Vista-Controlador (MVC)**, interfaz gráfica con **Java Swing** estilizada con **FlatLaf**, y almacenamiento persistente en archivos **JSON** utilizando **Google Gson**.
 
-El presente proyecto consiste en una aplicación de escritorio desarrollada en el lenguaje de programación Java como proyecto final del curso de Programación Orientada a Objetos. Su objetivo es gestionar las operaciones comerciales y de almacenamiento de una empresa dedicada a la venta de productos, abarcando el control de catálogo, registro de clientes, administración de personal, gestión de bodegas físicas, control de existencias y emisión de órdenes de compra.
-
-La solución aplica el patrón arquitectónico Modelo-Vista-Controlador (MVC), implementa una interfaz gráfica de usuario construida con la biblioteca estándar Java Swing complementada con el tema visual FlatLaf, y utiliza archivos en formato JSON mediante la biblioteca Google Gson para garantizar la persistencia local de la información entre sesiones de ejecución.
-
----
-
-## 2. Alcance del Sistema
-
-El sistema comprende los siguientes módulos funcionales:
-
-- **Panel General**: Visualización de indicadores operativos sobre el total de productos registrados, clientes activos, bodegas configuradas y monto acumulado de ventas completadas.
-- **Gestión de Productos**: Registro y consulta del catálogo de artículos con validación de código único y precio unitario expresado en quetzales (Q).
-- **Gestión de Clientes**: Administración del directorio de clientes a partir de sus datos personales (heredados de la clase abstracta `Persona`), fecha de nacimiento y clasificación comercial (`REGULAR` o `VIP`).
-- **Gestión de Empleados**: Registro de la nómina de colaboradores con código de empleado, número de Documento Personal de Identificación (DPI), dirección, puesto y salario.
-- **Gestión de Bodegas**: Configuración de sedes físicas de almacenamiento, asignación de un empleado encargado y definición de la capacidad máxima en unidades.
-- **Control de Inventario**: Abastecimiento de productos por bodega con verificación automática de la capacidad máxima disponible e indicadores porcentuales de ocupación.
-- **Órdenes de Compra y Facturación**: Creación de órdenes asociadas a un cliente y a una bodega de despacho, permitiendo agregar uno o varios productos con cálculo automático de subtotales y total general. Incluye el manejo de estados (`PENDIENTE`, `COMPLETADA`, `CANCELADA`) y la actualización automática del inventario al completar una venta.
+### Integrantes del Equipo
+* **Pedro Andrés Chajón** 
+* **Sharon Guacamaya** (`sharonley112`)
+* **Dannii Pirir** (`dannii-12`)
 
 ---
 
-## 3. Estructura del Directorio
+## 1. Módulos del Sistema
+
+El sistema centraliza las operaciones comerciales y logísticas a través de 7 módulos:
+
+* **Dashboard (Panel General)**: Resumen operativo en tiempo real con tarjetas de métricas (total de ingresos, productos, clientes y bodegas activas), tabla de ocupación de bodegas y ventas recientes.
+* **Catálogo de Productos**: Mantenimiento de artículos con validación de código único, marca, descripción y precio unitario en Quetzales (`Q`).
+* **Directorio de Clientes**: Registro de clientes con DPI único (13 dígitos), datos personales y clasificación comercial (`REGULAR` o `VIP`).
+* **Nómina de Empleados**: Registro de trabajadores con código laboral, puesto y salario mensual. Sirve de base para asignar los encargados de cada bodega.
+* **Gestión de Bodegas**: Configuración de almacenes físicos con asignación de un empleado responsable y límite de capacidad máxima en unidades.
+* **Control de Inventario**: Abastecimiento de existencias por bodega con control automático de sobrecupo y visualización de unidades libres y ocupadas.
+* **Facturación y Órdenes de Compra**: Carrito de compras con cálculo automático de subtotales y total general. Permite guardar cotizaciones (`PENDIENTE`) y emitir ventas (`COMPLETADA`) con descuento automático y atómico de existencias en el inventario.
+
+---
+
+## 2. Estructura del Proyecto
 
 ```text
 sistema-gestion-ventas/
-├── run.sh                  # Script de compilación y ejecución en sistemas Unix/macOS
-├── pom.xml                 # Configuración de construcción y dependencias para Apache Maven
-├── lib/                    # Bibliotecas externas requeridas en tiempo de compilación y ejecución
-│   ├── gson-2.10.1.jar     # Biblioteca Google Gson para serialización JSON
-│   └── flatlaf-3.4.jar     # Biblioteca FlatLaf para el estilo visual de Java Swing
-├── bin/                    # Directorio de salida para archivos de bytecode compilados (.class)
-├── data/                   # Almacenamiento persistente en archivos JSON
+├── pom.xml                 # Configuración de construcción y dependencias Maven
+├── run.bat                 # Script de compilación y ejecución directa en Windows
+├── run.sh                  # Script de ejecución para macOS y Linux
+├── lib/                    # Librerías externas (.jar)
+│   ├── gson-2.10.1.jar     # Google Gson para persistencia JSON
+│   └── flatlaf-3.4.jar     # Tema visual moderno FlatLaf para Java Swing
+├── data/                   # Persistencia local en archivos JSON
 │   ├── productos.json
 │   ├── clientes.json
 │   ├── empleados.json
 │   ├── bodegas.json
 │   ├── inventarios.json
 │   └── ordenes.json
-├── docs/                   # Documentación académica y técnica del proyecto
-│   ├── DIAGRAMA_UML.md     # Diagrama de clases UML y justificación de principios POO
-│   ├── MANUAL_TECNICO.md   # Arquitectura MVC, diccionario de datos JSON y reglas de negocio
-│   ├── MANUAL_USUARIO.md   # Manual operativo paso a paso y solución de problemas
-│   └── PLAN_DE_PRUEBAS.md  # Matriz de 24 casos de prueba funcionales y de límites
-├── run.bat                 # Script de compilación y ejecución directa en Windows
-├── run.sh                  # Script de compilación y ejecución en sistemas Unix/macOS
-├── pom.xml                 # Configuración de construcción para Maven y NetBeans
-├── lib/                    # Bibliotecas externas requeridas (.jar)
-│   ├── gson-2.10.1.jar     # Google Gson para persistencia JSON
-│   └── flatlaf-3.4.jar     # FlatLaf para tema visual moderno en Swing
-├── bin/                    # Bytecode compilado (.class) y sistema.jar autocontenido
-    ├── Main.java           # Punto de entrada de la aplicación
-    ├── model/              # Clases del dominio y enumeraciones
-    │   ├── Persona.java
-    │   ├── Cliente.java
-    │   ├── TipoCliente.java
+├── docs/                   # Documentación oficial del proyecto
+│   ├── DIAGRAMA_UML.md     # Diagrama de clases y justificación de principios POO
+│   ├── MANUAL_TECNICO.md   # Arquitectura MVC, algoritmos y reglas de negocio
+│   ├── MANUAL_USUARIO.md   # Guía paso a paso y solución de problemas
+│   └── PLAN_DE_PRUEBAS.md  # Matriz de casos de prueba
+└── src/main/java/com/sistema/
+    ├── Main.java           # Clase principal y arranque de la interfaz gráfica
+    ├── model/              # Clases de dominio (Entidades POO y enumeraciones)
+    │   ├── Persona.java    # Clase abstracta base
+    │   ├── Cliente.java & TipoCliente.java
     │   ├── Empleado.java
     │   ├── Producto.java
     │   ├── Bodega.java
-    │   ├── ItemInventario.java
-    │   ├── Inventario.java
-    │   ├── DetalleOrden.java
-    │   ├── OrdenCompra.java
-    │   └── EstadoOrden.java
-    ├── persistence/        # Capa de acceso y serialización de datos
-    │   └── JsonRepository.java
-    ├── controller/         # Controlador central y validaciones de negocio
-    │   └── SistemaController.java
-    └── view/               # Componentes y paneles de la interfaz gráfica Swing
+    │   ├── ItemInventario.java & Inventario.java
+    │   └── DetalleOrden.java, OrdenCompra.java & EstadoOrden.java
+    ├── persistence/        # Acceso a datos
+    │   └── JsonRepository.java  # Serializador genérico con Gson
+    ├── controller/         # Lógica central del sistema
+    │   └── SistemaController.java  # Validaciones, colecciones y descuento de stock
+    └── view/               # Interfaz gráfica en Java Swing
         ├── MainFrame.java
         ├── UITheme.java
         ├── DashboardPanel.java
@@ -82,34 +73,25 @@ sistema-gestion-ventas/
 
 ---
 
-## 4. Requisitos e Instrucciones de Ejecución
+## 3. Instrucciones de Ejecución
 
-### Requisitos Previos
-- **Java Development Kit (JDK)**: Versión 17 o superior instalada y configurada en las variables de entorno del sistema.
-- **Bibliotecas externas**: Incluidas de forma local en el directorio `lib/` (`gson-2.10.1.jar` y `flatlaf-3.4.jar`), por lo que no se requiere descarga adicional si se utiliza el script de arranque.
+### Opción 1: Scripts Automáticos (La forma más rápida)
+* **En Windows**: Haz doble clic sobre `run.bat` o ejecútalo desde CMD/PowerShell:
+  ```cmd
+  run.bat
+  ```
+* **En macOS o Linux**:
+  ```bash
+  chmod +x run.sh
+  ./run.sh
+  ```
 
-### Opción 1: Ejecución mediante el script automatizado
-Desde una terminal ubicada en la raíz del proyecto, otorgar permisos de ejecución (únicamente la primera vez) e iniciar el script:
+### Opción 2: Desde tu IDE de preferencia
+* **Apache NetBeans**: Abrir el proyecto (`File > Open Project`), hacer clic derecho en el proyecto > **Clean and Build**, y luego presionar **F6** o ejecutar `Main.java` (`Shift + F6`).
+* **Visual Studio Code**: Abrir la carpeta del proyecto, contar con el *Extension Pack for Java*, abrir `Main.java` y hacer clic en **Run**.
+* **IntelliJ IDEA**: Abrir la carpeta o el archivo `pom.xml`, esperar a que sincronice Maven y ejecutar `Main.java`.
 
-```bash
-chmod +x run.sh
-./run.sh
-```
-
-### Opción 2: Compilación y ejecución manual con herramientas del JDK
-Para compilar los archivos fuente hacia el directorio `bin/` y ejecutar la clase principal indicando el `classpath`:
-
-```bash
-mkdir -p bin
-javac -cp "lib/*" -d bin $(find src/main/java -name "*.java")
-java -cp "bin:lib/*" com.sistema.Main
-```
-
-*(Nota: En entornos Windows, el separador del argumento `-cp` debe sustituirse por punto y coma `;`, utilizando `"bin;lib/*"`).*
-
-### Opción 3: Construcción y ejecución con Apache Maven
-Si el entorno cuenta con Apache Maven instalado, es posible compilar y empaquetar el proyecto mediante el archivo `pom.xml`:
-
+### Opción 3: Compilación con Apache Maven
 ```bash
 mvn clean package
 java -jar target/sistema-gestion-ventas-1.0.0-jar-with-dependencies.jar
@@ -117,55 +99,33 @@ java -jar target/sistema-gestion-ventas-1.0.0-jar-with-dependencies.jar
 
 ---
 
-## 5. Flujo de Trabajo Colaborativo en Git
+## 4. Distribución del Trabajo y Flujo en Git
 
-El desarrollo del proyecto está estructurado para un equipo de tres integrantes utilizando Git y GitHub bajo un esquema de ramas por módulo funcional (`feature branches`), evitando conflictos de edición directa sobre la rama principal `main`.
+El desarrollo del proyecto se organizó mediante ramas por funcionalidad (*feature branches*) en GitHub, integrando los módulos a la rama principal `main` a través de Pull Requests revisados y aprobados:
 
-### Distribución de Responsabilidades Sugerida
-1. **Integrante 1 (Dominio y Persistencia)**:
-   - Implementación de la jerarquía de clases en `com.sistema.model` (`Persona`, `Cliente`, `Empleado`, `Producto`, `Bodega`, `Inventario`, `ItemInventario`, `OrdenCompra`, `DetalleOrden` y enumeraciones).
-   - Implementación de la lectura y escritura genérica en `com.sistema.persistence.JsonRepository`.
-   - Rama asignada: `feature/modelo-persistencia`.
+### Módulos y Responsabilidades:
 
-2. **Integrante 2 (Controlador y Reglas de Negocio)**:
-   - Desarrollo de `com.sistema.controller.SistemaController`.
-   - Implementación de validaciones de unicidad (DPI, códigos de producto, bodegas y órdenes), control de capacidad máxima de bodegas y lógica de descuento de existencias al completar órdenes de compra.
-   - Elaboración de lotes de datos iniciales en `data/*.json`.
-   - Rama asignada: `feature/controlador-logica`.
+1. **Pedro Andrés Chajón**:
+   * **Módulo**: Arquitectura Base, Núcleo del Sistema y Ventas.
+   * **Componentes desarrollados**: Controlador central (`SistemaController.java`), Persistencia genérica JSON (`JsonRepository.java`), Entidades de Ventas (`OrdenCompra`, `DetalleOrden`, `EstadoOrden`), Panel General (`DashboardPanel.java`), Facturación (`OrdenCompraPanel.java`) y ventana principal (`MainFrame.java`).
+   * **Integración**: Configuración del repositorio y fusiones en `main`.
 
-3. **Integrante 3 (Interfaz Gráfica y Documentación)**:
-   - Construcción de la ventana principal y los paneles en `com.sistema.view` (`MainFrame`, `DashboardPanel`, `ProductoPanel`, `ClientePanel`, `EmpleadoPanel`, `BodegaPanel`, `InventarioPanel`, `OrdenCompraPanel`).
-   - Integración de eventos de usuario con el controlador y redacción de manuales en `docs/`.
-   - Rama asignada: `feature/interfaz-swing`.
+2. **Dannii Pirir (`dannii-12`)**:
+   * **Módulo**: Gestión Comercial y Recursos Humanos.
+   * **Componentes desarrollados**: Jerarquía de clases (`Persona.java` abstracta, `Cliente.java`, `TipoCliente.java` y `Empleado.java`) y sus respectivas interfaces gráficas (`ClientePanel.java` y `EmpleadoPanel.java`).
+   * **Rama de trabajo**: `feature/modulo-clientes-empleados` ➔ **Pull Request #3** (Aprobado y fusionado).
 
-### Procedimiento de Trabajo con Ramas
+3. **Sharon Guacamaya (`sharonley112`)**:
+   * **Módulo**: Almacén, Catálogo e Inventario.
+   * **Componentes desarrollados**: Catálogo de productos (`Producto.java`), Sedes físicas (`Bodega.java`), existencias (`Inventario.java`, `ItemInventario.java`) y sus respectivas interfaces gráficas (`ProductoPanel.java`, `BodegaPanel.java` y `InventarioPanel.java`).
+   * **Rama de trabajo**: `feature/modulo-inventario-bodegas` ➔ **Pull Request #2** (Aprobado y fusionado).
 
-1. **Clonación del repositorio e inicialización local**:
-   ```bash
-   git clone <url-del-repositorio>
-   cd sistema-gestion-ventas
-   ```
+---
 
-2. **Creación y cambio a la rama de trabajo correspondiente**:
-   ```bash
-   git checkout -b feature/nombre-del-modulo
-   ```
+## 5. Documentación Adicional
 
-3. **Registro de avances locales (commits atómicos y descriptivos)**:
-   ```bash
-   git status
-   git add src/main/java/com/sistema/...
-   git commit -m "Implementa validacion de stock en SistemaController"
-   ```
-
-4. **Sincronización con la rama principal antes de publicar**:
-   ```bash
-   git fetch origin
-   git rebase origin/main
-   ```
-
-5. **Publicación de la rama e integración mediante Pull Request**:
-   ```bash
-   git push -u origin feature/nombre-del-modulo
-   ```
-   Una vez publicada la rama en GitHub, se genera un *Pull Request* hacia `main` para que los demás integrantes revisen que el código compile sin errores antes de fusionar los cambios.
+En la carpeta `docs/` se encuentran los documentos detallados del proyecto:
+* **[Diagrama de Clases UML y Fundamentos POO](docs/DIAGRAMA_UML.md)**: Diagrama completo en notación Mermaid y justificación de abstracción, herencia, encapsulamiento, polimorfismo, composición y agregación.
+* **[Manual Técnico](docs/MANUAL_TECNICO.md)**: Explicación de la arquitectura MVC, el algoritmo de dos fases para descuento de stock y diccionario de datos.
+* **[Manual de Usuario](docs/MANUAL_USUARIO.md)**: Guía ilustrada paso a paso, orden de captura recomendado y solución de problemas comunes.
+* **[Plan de Pruebas](docs/PLAN_DE_PRUEBAS.md)**: Matriz de pruebas funcionales y de casos límite.
