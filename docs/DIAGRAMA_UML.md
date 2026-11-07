@@ -1,20 +1,24 @@
-# Diagrama de Clases UML y Fundamentación de Programación Orientada a Objetos
+# Diagrama de Clases UML y Fundamentos POO
 
-## 1. Introducción
-
-Este documento presenta el diseño orientado a objetos del **Sistema de Gestión de Inventario y Ventas**. El modelo fue estructurado siguiendo los principios fundamentales de la Programación Orientada a Objetos (abstracción, encapsulamiento, herencia y polimorfismo), así como las relaciones estructurales de asociación, agregación, composición y dependencia entre las capas de modelo (`com.sistema.model`), persistencia (`com.sistema.persistence`), controlador (`com.sistema.controller`) y presentación (`com.sistema.view`).
+**Proyecto**: Sistema de Gestión de Inventario y Ventas  
+**Curso**: Programación Orientada a Objetos  
+**Lenguaje**: Java 21 (Swing + Gson + FlatLaf)  
+**Integrantes**:
+* Pedro Andrés Chajón
+* Sharon Guacamaya
+* Dannii Pirir
 
 ---
 
-## 2. Diagrama de Clases UML
+## 1. Diagrama de Clases UML del Sistema
 
-El siguiente diagrama en notación UML representa fielmente las clases, enumeraciones, atributos, métodos y relaciones implementadas en el código fuente del proyecto:
+El diagrama modela la estructura de clases del proyecto dividida en sus paquetes principales: el dominio (`com.sistema.model`), la persistencia (`com.sistema.persistence`) y la lógica de negocio (`com.sistema.controller`).
 
 ```mermaid
 classDiagram
     direction TB
 
-    %% Jerarquia de Persona (Abstraccion y Herencia)
+    %% Jerarquia de Persona
     class Persona {
         <<abstract>>
         #String dpi
@@ -64,11 +68,11 @@ classDiagram
         +toString() String
     }
 
-    Persona <|-- Cliente : hereda (extends)
-    Persona <|-- Empleado : hereda (extends)
-    Cliente --> TipoCliente : clasifica mediante
+    Persona <|-- Cliente : hereda
+    Persona <|-- Empleado : hereda
+    Cliente --> TipoCliente : tiene tipo
 
-    %% Catalogo, Almacenamiento e Inventario
+    %% Catalogo, Bodegas e Inventario
     class Producto {
         -String codigo
         -String nombre
@@ -92,19 +96,22 @@ classDiagram
 
     class Bodega {
         -String idBodega
-        -Empleado empleado
-        -int capacidad
+        -String nombre
         -String direccion
+        -int capacidad
+        -Empleado encargado
         +Bodega()
-        +Bodega(String idBodega, Empleado empleado, int capacidad, String direccion)
+        +Bodega(String idBodega, String nombre, String direccion, int capacidad, Empleado encargado)
         +getIdBodega() String
         +setIdBodega(String idBodega) void
-        +getEmpleado() Empleado
-        +setEmpleado(Empleado empleado) void
-        +getCapacidad() int
-        +setCapacidad(int capacidad) void
+        +getNombre() String
+        +setNombre(String nombre) void
         +getDireccion() String
         +setDireccion(String direccion) void
+        +getCapacidad() int
+        +setCapacidad(int capacidad) void
+        +getEncargado() Empleado
+        +setEncargado(Empleado encargado) void
         +toString() String
     }
 
@@ -132,16 +139,17 @@ classDiagram
         +getItems() List~ItemInventario~
         +setItems(List~ItemInventario~ items) void
         +registrarOActualizarStock(Producto producto, int cantidad) void
-        +obtenerStock(String codigoProducto) int
         +descontarStock(String codigoProducto, int cantidad) boolean
+        +obtenerStock(String codigoProducto) int
         +getTotalUnidadesAlmacenadas() int
     }
 
-    Bodega o-- Empleado : agregacion (encargado)
-    Inventario *-- ItemInventario : composicion (items de stock)
-    ItemInventario --> Producto : asocia
+    Bodega --> Empleado : asigna encargado
+    Inventario *-- ItemInventario : contiene
+    ItemInventario --> Producto : referencia
+    Inventario ..> Bodega : vinculada por idBodega
 
-    %% Facturacion y Ventas
+    %% Ventas y Facturacion
     class DetalleOrden {
         -Producto producto
         -int cantidad
@@ -156,7 +164,6 @@ classDiagram
         +getPrecioUnitario() double
         +setPrecioUnitario(double precioUnitario) void
         +getSubtotal() double
-        +setSubtotal(double subtotal) void
         -calcularSubtotal() void
         +toString() String
     }
@@ -185,25 +192,22 @@ classDiagram
         +getIdBodega() String
         +setIdBodega(String idBodega) void
         +getItems() List~DetalleOrden~
-        +setItems(List~DetalleOrden~ items) void
         +agregarDetalle(Producto producto, int cantidad) void
         +eliminarDetalle(String codigoProducto) void
         +calcularTotal() void
         +getFecha() String
-        +setFecha(String fecha) void
         +getTotal() double
-        +setTotal(double total) void
         +getEstado() EstadoOrden
         +setEstado(EstadoOrden estado) void
         +toString() String
     }
 
-    OrdenCompra *-- DetalleOrden : composicion (renglones)
-    OrdenCompra --> Cliente : emite para
-    OrdenCompra --> EstadoOrden : registra estado
+    OrdenCompra *-- DetalleOrden : renglones
+    OrdenCompra --> Cliente : factura a
+    OrdenCompra --> EstadoOrden : maneja estado
     DetalleOrden --> Producto : referencia
 
-    %% Capa de Persistencia y Controlador
+    %% Capa Control y Persistencia
     class JsonRepository {
         <<utility>>
         -Gson gson$
@@ -218,85 +222,57 @@ classDiagram
         -List~Bodega~ bodegas
         -List~Inventario~ inventarios
         -List~OrdenCompra~ ordenes
-        +SistemaController()
         +cargarDatos() void
-        +registrarProducto(Producto producto) void
-        +buscarProducto(String codigo) Producto
-        +actualizarProducto(Producto producto) void
-        +registrarCliente(Cliente cliente) void
-        +buscarCliente(String dpi) Cliente
-        +actualizarCliente(Cliente cliente) void
-        +registrarEmpleado(Empleado empleado) void
-        +buscarEmpleado(String idEmpleado) Empleado
-        +registrarBodega(Bodega bodega) void
-        +buscarBodega(String idBodega) Bodega
-        +obtenerOCrearInventario(String idBodega) Inventario
-        +registrarStock(String idBodega, Producto producto, int cantidad) void
-        +consultarStock(String idBodega, String codigoProducto) int
+        +registrarProducto(Producto p) void
+        +registrarCliente(Cliente c) void
+        +registrarEmpleado(Empleado e) void
+        +registrarBodega(Bodega b) void
+        +registrarStock(String idBodega, Producto p, int cant) void
         +registrarOrden(OrdenCompra orden) void
-        +buscarOrden(String idOrden) OrdenCompra
         +completarOrden(String idOrden) void
         +cancelarOrden(String idOrden) void
-        -procesarDescuentoStock(OrdenCompra orden) void
     }
 
-    SistemaController ..> JsonRepository : usa persistencia
-    SistemaController o-- Producto : gestiona lista
-    SistemaController o-- Cliente : gestiona lista
-    SistemaController o-- Empleado : gestiona lista
-    SistemaController o-- Bodega : gestiona lista
-    SistemaController o-- Inventario : gestiona lista
-    SistemaController o-- OrdenCompra : gestiona lista
+    SistemaController ..> JsonRepository : persiste datos
+    SistemaController o-- Producto : administra
+    SistemaController o-- Cliente : administra
+    SistemaController o-- Empleado : administra
+    SistemaController o-- Bodega : administra
+    SistemaController o-- Inventario : administra
+    SistemaController o-- OrdenCompra : administra
 ```
 
 ---
 
-## 3. Justificación de los Principios POO Implementados
+## 2. Aplicación de Principios POO en el Código
 
-### 3.1. Abstracción
-La abstracción consiste en capturar las características esenciales de un objeto omitiendo los detalles irrelevantes para el dominio del problema.
-- **Clase abstracta `Persona`**: Declara los atributos comunes a todo ser humano en el sistema (`dpi`, `nombre`, `direccion`). Se define explícitamente como `abstract` para evitar que se puedan instanciar personas genéricas en la memoria; toda persona debe ser concretamente un `Cliente` o un `Empleado`.
-- **Entidades del dominio**: `Producto`, `Bodega`, `Inventario`, `ItemInventario`, `OrdenCompra` y `DetalleOrden` modelan con precisión los elementos de la operación logística y comercial.
+En lugar de explicaciones teóricas genéricas, aquí se detalla exactamente cómo y en qué archivos aplicamos cada principio:
 
-### 3.2. Herencia
-La herencia permite la reutilización de código y la especialización de comportamientos a partir de una clase base común.
-- **Subclase `Cliente` (`extends Persona`)**: Hereda `dpi`, `nombre` y `direccion` de `Persona`, invocando al constructor base mediante `super(dpi, nombre, direccion)`. Añade sus propios atributos: `fechaNacimiento` y el tipo comercial `TipoCliente`.
-- **Subclase `Empleado` (`extends Persona`)**: Reutiliza la identificación civil de `Persona` e incorpora los atributos laborales requeridos por la nómina de la empresa: `idEmpleado`, `puesto` y `salario`.
+### 2.1. Abstracción y Jerarquía Base
+* **`Persona.java` es una clase abstracta**: En la lógica del negocio no tiene sentido registrar una "persona a secas", sino alguien con un rol específico. Por eso `Persona` concentra los datos comunes (`dpi`, `nombre`, `direccion`) y obliga a instanciarla únicamente a través de sus clases hijas.
+* **Separación de responsabilidades**: Las clases del modelo (`model/`) solo guardan el estado y calculan sus propios datos; no tienen código de interfaz gráfica ni llamadas directas a archivos.
 
-### 3.3. Encapsulamiento
-El encapsulamiento protege el estado interno de las clases frente a modificaciones no autorizadas o inconsistentes desde el exterior.
-- **Modificadores de visibilidad**:
-  - `private`: Todos los atributos de las clases concretas están declarados como `private`, restringiendo su manipulación directa.
-  - `protected`: Los atributos de la clase abstracta `Persona` son `protected` para permitir acceso directo por herencia a sus clases hijas (`Cliente` y `Empleado`), manteniendo el ocultamiento hacia el exterior.
-- **Métodos accesores y mutadores (Getters y Setters)**: Proveen acceso regulado a cada variable.
-- **Invariantes y autocalculo**:
-  - En `DetalleOrden`, los métodos `setCantidad(int)` y `setPrecioUnitario(double)` recalculan de manera privada el subtotal con `calcularSubtotal()`.
-  - En `OrdenCompra`, `agregarDetalle()` y `eliminarDetalle()` recalculan automáticamente el gran total de la venta con `calcularTotal()`.
-  - En `ItemInventario`, `restarStock(int cantidad)` valida internamente que `cantidad <= this.stock` antes de restar, devolviendo `false` si se intenta descontar más de lo existente.
+### 2.2. Herencia
+* **`Cliente extends Persona`**: Reutiliza los atributos básicos y añade `fechaNacimiento` y `tipo` (`REGULAR` o `VIP`). En su constructor llama a `super(dpi, nombre, direccion)` para inicializar la clase padre.
+* **`Empleado extends Persona`**: Añade los campos laborales necesarios para la nómina y asignación de bodegas: `idEmpleado`, `puesto` y `salario`.
 
-### 3.4. Polimorfismo
-El polimorfismo permite que distintos objetos respondan al mismo mensaje de forma especializada.
-- **Polimorfismo por sobrescritura (`@Override`)**:
-  - Las clases del modelo sobrescriben el método `toString()` de `java.lang.Object`.
-  - Por ejemplo, `Cliente.toString()` muestra el nombre, el tipo y el DPI, mientras que `Empleado.toString()` muestra el código de empleado, nombre y puesto.
-  - Cuando los componentes Swing (`JComboBox<T>`) renderizan estas clases, invocan polimórficamente `toString()` en tiempo de ejecución para mostrar el texto adecuado sin acoplar la vista.
-- **Polimorfismo paramétrico (Genéricos)**:
-  - `JsonRepository` utiliza el parámetro genérico `<T>` en `guardar(String, List<T>)` y `cargar(String, Type)`. Un solo método es capaz de procesar listas de cualquier clase del dominio.
+### 2.3. Encapsulamiento y Validaciones Internas
+* **Atributos privados**: Todos los campos en las entidades son `private` (o `protected` en la clase base `Persona`).
+* **Cálculo automático de subtotales y totales**:
+  * En `DetalleOrden`, cada vez que cambia la cantidad o el precio se ejecuta `calcularSubtotal()`, evitando inconsistencias manuales.
+  * En `OrdenCompra`, al agregar o quitar un producto con `agregarDetalle()` o `eliminarDetalle()`, se recalcula el total de la venta de forma automática.
+* **Protección de stock**: En `ItemInventario`, el método `restarStock(int cantidad)` comprueba internamente que haya suficientes existencias antes de restar; si no alcanza, devuelve `false` y no modifica el valor.
 
-### 3.5. Relaciones Estructurales: Composición vs. Agregación
+### 2.4. Polimorfismo
+* **Sobrescritura de `toString()`**: Las clases `Producto`, `Cliente`, `Empleado` y `Bodega` sobrescriben `toString()`. Esto permite que los selectores desplegables (`JComboBox`) de Swing muestren texto claro (como el nombre comercial o código) de forma automática sin necesidad de adaptadores extras.
+* **Genéricos en Persistencia**: En `JsonRepository.java`, los métodos `guardar(String, List<T>)` y `cargar(String, Type)` usan el tipo genérico `<T>`, permitiendo reutilizar el mismo código para guardar productos, clientes, empleados, bodegas, inventarios y órdenes.
 
-#### Composición (Relación Fuerte "Todo/Parte")
-En la composición, el ciclo de vida del objeto contenido depende del ciclo de vida del contenedor. Si el contenedor se destruye, los componentes asociados dejan de tener sentido y desaparecen.
-1. **`OrdenCompra` y `DetalleOrden`**:
-   - Una orden de compra se compone de una lista de `DetalleOrden`. Los renglones de detalle pertenecen exclusivamente a esa orden de compra; no existen de forma autónoma.
-2. **`Inventario` y `ItemInventario`**:
-   - Cada registro de `Inventario` administra la lista de existencias `ItemInventario` de una sede física específica. Las existencias en esa bodega dependen totalmente del inventario de dicha sede.
+### 2.5. Relaciones entre Clases: Composición vs. Agregación
 
-#### Agregación (Relación Débil "Todo/Parte")
-En la agregación, los objetos relacionados tienen ciclos de vida independientes. Si el objeto contenedor se destruye, el objeto contenido continúa existiendo.
-1. **`Bodega` y `Empleado`**:
-   - La clase `Bodega` tiene un atributo `private Empleado empleado;` que representa al encargado. El empleado existe en la nómina de la empresa antes de la creación de la bodega, y si la bodega se cierra o se elimina, el empleado permanece registrado en el sistema.
-2. **`OrdenCompra` y `Cliente`**:
-   - La orden asocia a un `Cliente` para la facturación, pero el cliente existe de manera independiente en el directorio comercial.
-3. **`DetalleOrden` / `ItemInventario` y `Producto`**:
-   - Tanto los renglones de una venta como los registros de inventario referencian instancias de `Producto`, pero la entidad `Producto` existe de forma autónoma en el catálogo general.
+| Relación | Clases Involucradas | Tipo | Justificación en el Sistema |
+| :--- | :--- | :--- | :--- |
+| **Orden ➔ Detalles** | `OrdenCompra` y `DetalleOrden` | **Composición** (Fuerte) | Los renglones de una orden solo tienen sentido dentro de esa compra. Si la orden se elimina, sus detalles desaparecen con ella. |
+| **Inventario ➔ Items** | `Inventario` e `ItemInventario` | **Composición** (Fuerte) | El registro de existencias de una bodega específica depende por completo de ese inventario. |
+| **Bodega ➔ Empleado** | `Bodega` y `Empleado` | **Agregación** (Débil) | La bodega tiene un encargado asignado, pero si la bodega se da de baja, el empleado sigue existiendo en la nómina. |
+| **Orden ➔ Cliente** | `OrdenCompra` y `Cliente` | **Agregación** (Débil) | La orden se factura a nombre de un cliente, pero el cliente existe de forma independiente en la base de datos comercial. |
+| **Detalle ➔ Producto** | `DetalleOrden` e `ItemInventario` con `Producto` | **Asociación** | Tanto el carrito de ventas como las existencias apuntan al catálogo general de productos. |
