@@ -46,3 +46,5 @@ public class Empleado extends Persona {
         return idEmpleado + " - " + getNombre() + " (" + puesto + ")";
     }
 }
+
+// Modulo desarrollado por Persona 1

@@ -41,3 +41,4 @@ public class Cliente extends Persona {
     }
 }
 // Modulo desarrollado y gestionado por Persona 1
+// Modulo desarrollado por Persona 1

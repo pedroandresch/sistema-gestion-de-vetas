@@ -228,3 +228,5 @@ public class ClientePanel extends JPanel {
         lblContador.setText(modeloTabla.getRowCount() + " registrados");
     }
 }
+
+// Modulo desarrollado por Persona 1
