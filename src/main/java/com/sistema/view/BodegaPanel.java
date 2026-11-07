@@ -10,143 +10,231 @@ import java.awt.*;
 
 public class BodegaPanel extends JPanel {
 
-    private final SistemaController controller;
+    private SistemaController controlador;
 
     private JTextField txtIdBodega;
     private JComboBox<Empleado> cmbEmpleado;
     private JTextField txtCapacidad;
     private JTextField txtDireccion;
 
+    private JTextField txtBuscar;
+    private JLabel lblContador;
     private JTable tablaBodegas;
-    private DefaultTableModel tableModel;
+    private DefaultTableModel modeloTabla;
 
-    public BodegaPanel(SistemaController controller) {
-        this.controller = controller;
-        initComponents();
+    public BodegaPanel(SistemaController controlador) {
+        this.controlador = controlador;
+        iniciarComponentes();
         recargarEmpleadosCombo();
         recargarTabla();
     }
 
-    private void initComponents() {
-        setLayout(new BorderLayout(15, 15));
-        setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+    private void iniciarComponentes() {
+        setLayout(new BorderLayout(20, 20));
+        setBackground(UITheme.FONDO_PRINCIPAL);
+        setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
 
-        // Formulario
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createTitledBorder("Registrar Nueva Bodega"));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 8, 6, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        // Formulario izquierdo para registro de bodegas
+        JPanel panelFormulario = new JPanel(new BorderLayout(0, 14));
+        UITheme.estilizarTarjeta(panelFormulario);
+        panelFormulario.setPreferredSize(new Dimension(350, 0));
+        panelFormulario.add(UITheme.crearEncabezadoSeccion("Datos de la Bodega", null), BorderLayout.NORTH);
 
-        txtIdBodega = new JTextField(15);
+        txtIdBodega = new JTextField();
         cmbEmpleado = new JComboBox<>();
-        txtCapacidad = new JTextField(15);
-        txtDireccion = new JTextField(15);
+        txtCapacidad = new JTextField();
+        txtDireccion = new JTextField();
 
-        JButton btnGuardar = new JButton("Registrar Bodega");
-        btnGuardar.setBackground(new Color(255, 152, 0));
-        btnGuardar.setForeground(Color.WHITE);
-        btnGuardar.setFocusPainted(false);
+        UITheme.estilizarCampoTexto(txtIdBodega, "Ej. BOD-01");
+        UITheme.estilizarCombo(cmbEmpleado);
+        UITheme.estilizarCampoTexto(txtCapacidad, "Capacidad máxima");
+        UITheme.estilizarCampoTexto(txtDireccion, "Ubicación o dirección");
 
-        JButton btnLimpiar = new JButton("Limpiar");
+        JPanel panelCampos = new JPanel(new GridLayout(4, 1, 0, 10));
+        panelCampos.setOpaque(false);
+        panelCampos.add(UITheme.crearCampoFormulario("ID Bodega:", txtIdBodega));
+        panelCampos.add(UITheme.crearCampoFormulario("Empleado Encargado:", cmbEmpleado));
+        panelCampos.add(UITheme.crearCampoFormulario("Capacidad Máxima (Uds):", txtCapacidad));
+        panelCampos.add(UITheme.crearCampoFormulario("Dirección:", txtDireccion));
 
-        // Fila 0
-        gbc.gridx = 0; gbc.gridy = 0; formPanel.add(new JLabel("ID Bodega:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; formPanel.add(txtIdBodega, gbc);
-        gbc.gridx = 2; gbc.gridy = 0; formPanel.add(new JLabel("Empleado Encargado:"), gbc);
-        gbc.gridx = 3; gbc.gridy = 0; formPanel.add(cmbEmpleado, gbc);
+        JPanel contenedorCampos = new JPanel(new BorderLayout());
+        contenedorCampos.setOpaque(false);
+        contenedorCampos.add(panelCampos, BorderLayout.NORTH);
+        panelFormulario.add(contenedorCampos, BorderLayout.CENTER);
 
-        // Fila 1
-        gbc.gridx = 0; gbc.gridy = 1; formPanel.add(new JLabel("Capacidad Máxima:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; formPanel.add(txtCapacidad, gbc);
-        gbc.gridx = 2; gbc.gridy = 1; formPanel.add(new JLabel("Dirección:"), gbc);
-        gbc.gridx = 3; gbc.gridy = 1; formPanel.add(txtDireccion, gbc);
+        JButton btnLimpiar = new JButton("Nuevo / Limpiar");
+        UITheme.estilizarBotonSecundario(btnLimpiar);
 
-        // Fila 2
-        gbc.gridx = 2; gbc.gridy = 2; formPanel.add(btnLimpiar, gbc);
-        gbc.gridx = 3; gbc.gridy = 2; formPanel.add(btnGuardar, gbc);
+        JButton btnGuardar = new JButton("Guardar");
+        UITheme.estilizarBotonPrimario(btnGuardar, UITheme.COLOR_ADVERTENCIA);
 
-        add(formPanel, BorderLayout.NORTH);
+        JPanel panelBotones = new JPanel(new GridLayout(1, 2, 10, 0));
+        panelBotones.setOpaque(false);
+        panelBotones.add(btnLimpiar);
+        panelBotones.add(btnGuardar);
+        panelFormulario.add(panelBotones, BorderLayout.SOUTH);
 
-        // Tabla
-        String[] columnas = {"ID Bodega", "Empleado Encargado", "Capacidad", "Dirección"};
-        tableModel = new DefaultTableModel(columnas, 0) {
+        add(panelFormulario, BorderLayout.WEST);
+
+        // Tabla derecha con buscador de bodegas
+        JPanel panelTabla = new JPanel(new BorderLayout(10, 10));
+        UITheme.estilizarTarjeta(panelTabla);
+
+        lblContador = new JLabel("0 bodegas");
+
+        JPanel panelSuperiorTabla = new JPanel(new BorderLayout(10, 8));
+        panelSuperiorTabla.setOpaque(false);
+        panelSuperiorTabla.add(UITheme.crearEncabezadoSeccion("Bodegas Registradas", lblContador), BorderLayout.NORTH);
+
+        JPanel barraBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        barraBusqueda.setOpaque(false);
+        txtBuscar = new JTextField(20);
+        UITheme.estilizarCampoTexto(txtBuscar, "Buscar por ID o dirección...");
+        JButton btnBuscar = new JButton("Buscar");
+        UITheme.estilizarBotonSecundario(btnBuscar);
+        JButton btnVerTodas = new JButton("Ver Todas");
+        UITheme.estilizarBotonSecundario(btnVerTodas);
+
+        barraBusqueda.add(new JLabel("Buscar:"));
+        barraBusqueda.add(txtBuscar);
+        barraBusqueda.add(btnBuscar);
+        barraBusqueda.add(btnVerTodas);
+
+        panelSuperiorTabla.add(barraBusqueda, BorderLayout.SOUTH);
+        panelTabla.add(panelSuperiorTabla, BorderLayout.NORTH);
+
+        String[] columnas = {"ID Bodega", "Empleado Encargado", "Capacidad Máxima", "Ocupación Actual", "Dirección"};
+        modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
+            public boolean isCellEditable(int fila, int columna) {
                 return false;
             }
         };
 
-        tablaBodegas = new JTable(tableModel);
-        tablaBodegas.setRowHeight(24);
-        tablaBodegas.getTableHeader().setReorderingAllowed(false);
-        JScrollPane scrollPane = new JScrollPane(tablaBodegas);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Bodegas Registradas"));
+        tablaBodegas = new JTable(modeloTabla);
+        UITheme.estilizarTabla(tablaBodegas);
+        panelTabla.add(new JScrollPane(tablaBodegas), BorderLayout.CENTER);
 
-        add(scrollPane, BorderLayout.CENTER);
+        add(panelTabla, BorderLayout.CENTER);
 
-        // Eventos
-        btnGuardar.addActionListener(e -> guardarBodega());
+        // Eventos de botones y seleccion en la tabla
         btnLimpiar.addActionListener(e -> limpiarFormulario());
+        btnGuardar.addActionListener(e -> guardarBodega());
+        btnBuscar.addActionListener(e -> recargarTabla(txtBuscar.getText().trim()));
+        btnVerTodas.addActionListener(e -> {
+            txtBuscar.setText("");
+            recargarTabla("");
+        });
+
+        tablaBodegas.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                cargarBodegaSeleccionada();
+            }
+        });
     }
 
     public void recargarEmpleadosCombo() {
         cmbEmpleado.removeAllItems();
-        for (Empleado e : controller.getEmpleados()) {
+        for (Empleado e : controlador.getEmpleados()) {
             cmbEmpleado.addItem(e);
         }
     }
 
+    // Evento al seleccionar una fila: carga los datos en el formulario
+    private void cargarBodegaSeleccionada() {
+        int filaSeleccionada = tablaBodegas.getSelectedRow();
+        if (filaSeleccionada == -1) {
+            return;
+        }
+        String idBodega = String.valueOf(modeloTabla.getValueAt(filaSeleccionada, 0));
+        for (Bodega b : controlador.getBodegas()) {
+            if (b.getIdBodega().equalsIgnoreCase(idBodega)) {
+                txtIdBodega.setText(b.getIdBodega());
+                txtIdBodega.setEditable(false);
+                txtCapacidad.setText(String.valueOf(b.getCapacidad()));
+                txtDireccion.setText(b.getDireccion());
+                if (b.getEmpleado() != null) {
+                    cmbEmpleado.setSelectedItem(b.getEmpleado());
+                }
+                break;
+            }
+        }
+    }
+
+    private void limpiarFormulario() {
+        txtIdBodega.setText("");
+        txtIdBodega.setEditable(true);
+        txtCapacidad.setText("");
+        txtDireccion.setText("");
+        if (cmbEmpleado.getItemCount() > 0) {
+            cmbEmpleado.setSelectedIndex(0);
+        }
+        tablaBodegas.clearSelection();
+    }
+
+    // Validar campos y enviar al controlador
     private void guardarBodega() {
         try {
-            String id = txtIdBodega.getText().trim();
-            Empleado emp = (Empleado) cmbEmpleado.getSelectedItem();
-            String capStr = txtCapacidad.getText().trim();
-            String direccion = txtDireccion.getText().trim();
-
-            if (id.isEmpty() || capStr.isEmpty() || direccion.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "ID, Capacidad y Dirección son obligatorios.", "Validación", JOptionPane.WARNING_MESSAGE);
+            if (!txtIdBodega.isEditable()) {
+                JOptionPane.showMessageDialog(this, "Presione 'Nuevo / Limpiar' para registrar otra bodega.");
                 return;
             }
 
-            int capacidad = Integer.parseInt(capStr);
+            String id = txtIdBodega.getText().trim();
+            Empleado emp = (Empleado) cmbEmpleado.getSelectedItem();
+            String capTexto = txtCapacidad.getText().trim();
+            String direccion = txtDireccion.getText().trim();
+
+            if (id.isEmpty() || capTexto.isEmpty() || direccion.isEmpty() || emp == null) {
+                JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Validación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int capacidad = Integer.parseInt(capTexto);
             if (capacidad <= 0) {
                 JOptionPane.showMessageDialog(this, "La capacidad debe ser mayor a 0.", "Validación", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             Bodega b = new Bodega(id, emp, capacidad, direccion);
-            controller.registrarBodega(b);
+            controlador.registrarBodega(b);
 
-            JOptionPane.showMessageDialog(this, "Bodega registrada exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Bodega registrada exitosamente.");
             limpiarFormulario();
-            recargarTabla();
+            recargarTabla(txtBuscar.getText().trim());
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "La capacidad debe ser un número entero válido.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "La capacidad debe ser un número entero válido.", "Error", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void limpiarFormulario() {
-        txtIdBodega.setText("");
-        txtCapacidad.setText("");
-        txtDireccion.setText("");
-        if (cmbEmpleado.getItemCount() > 0) {
-            cmbEmpleado.setSelectedIndex(0);
-        }
+    public void recargarTabla() {
+        recargarTabla("");
     }
 
-    public void recargarTabla() {
-        tableModel.setRowCount(0);
-        for (Bodega b : controller.getBodegas()) {
-            String empInfo = (b.getEmpleado() != null) ? b.getEmpleado().getNombre() + " (" + b.getEmpleado().getIdEmpleado() + ")" : "Sin asignar";
-            tableModel.addRow(new Object[]{
-                    b.getIdBodega(),
-                    empInfo,
-                    b.getCapacidad(),
-                    b.getDireccion()
-            });
+    public void recargarTabla(String filtro) {
+        modeloTabla.setRowCount(0);
+        String busqueda = filtro.toLowerCase();
+
+        for (Bodega b : controlador.getBodegas()) {
+            boolean coincide = busqueda.isEmpty()
+                    || b.getIdBodega().toLowerCase().contains(busqueda)
+                    || b.getDireccion().toLowerCase().contains(busqueda);
+
+            if (coincide) {
+                String encargado = (b.getEmpleado() != null) ? b.getEmpleado().getNombre() : "Sin asignar";
+                int ocupacion = controlador.obtenerOCrearInventario(b.getIdBodega()).getTotalUnidadesAlmacenadas();
+
+                modeloTabla.addRow(new Object[]{
+                        b.getIdBodega(),
+                        encargado,
+                        b.getCapacidad() + " uds",
+                        ocupacion + " uds",
+                        b.getDireccion()
+                });
+            }
         }
+        lblContador.setText(modeloTabla.getRowCount() + " bodegas");
     }
 }

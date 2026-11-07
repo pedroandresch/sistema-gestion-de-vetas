@@ -9,7 +9,7 @@ import java.awt.*;
 
 public class EmpleadoPanel extends JPanel {
 
-    private final SistemaController controller;
+    private SistemaController controlador;
 
     private JTextField txtIdEmpleado;
     private JTextField txtNombre;
@@ -18,116 +18,145 @@ public class EmpleadoPanel extends JPanel {
     private JTextField txtPuesto;
     private JTextField txtSalario;
 
+    private JTextField txtBuscar;
+    private JLabel lblContador;
     private JTable tablaEmpleados;
-    private DefaultTableModel tableModel;
+    private DefaultTableModel modeloTabla;
 
-    public EmpleadoPanel(SistemaController controller) {
-        this.controller = controller;
-        initComponents();
+    public EmpleadoPanel(SistemaController controlador) {
+        this.controlador = controlador;
+        iniciarComponentes();
         recargarTabla();
     }
 
-    private void initComponents() {
-        setLayout(new BorderLayout(15, 15));
-        setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+    private void iniciarComponentes() {
+        setLayout(new BorderLayout(20, 20));
+        setBackground(UITheme.FONDO_PRINCIPAL);
+        setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
 
-        // Formulario
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createTitledBorder("Registrar Nuevo Empleado"));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 8, 6, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        // Formulario izquierdo para registro de empleados
+        JPanel panelFormulario = new JPanel(new BorderLayout(0, 14));
+        UITheme.estilizarTarjeta(panelFormulario);
+        panelFormulario.setPreferredSize(new Dimension(350, 0));
+        panelFormulario.add(UITheme.crearEncabezadoSeccion("Datos del Empleado", null), BorderLayout.NORTH);
 
-        txtIdEmpleado = new JTextField(15);
-        txtNombre = new JTextField(15);
-        txtDpi = new JTextField(15);
-        txtDireccion = new JTextField(15);
-        txtPuesto = new JTextField(15);
-        txtSalario = new JTextField(15);
+        txtIdEmpleado = new JTextField();
+        txtNombre = new JTextField();
+        txtDpi = new JTextField();
+        txtDireccion = new JTextField();
+        txtPuesto = new JTextField();
+        txtSalario = new JTextField();
 
-        JButton btnGuardar = new JButton("Registrar Empleado");
-        btnGuardar.setBackground(new Color(156, 39, 176));
-        btnGuardar.setForeground(Color.WHITE);
-        btnGuardar.setFocusPainted(false);
+        UITheme.estilizarCampoTexto(txtIdEmpleado, "Ej. EMP-01");
+        UITheme.estilizarCampoTexto(txtNombre, "Nombre completo");
+        UITheme.estilizarCampoTexto(txtDpi, "13 dígitos");
+        UITheme.estilizarCampoTexto(txtDireccion, "Dirección");
+        UITheme.estilizarCampoTexto(txtPuesto, "Puesto laboral");
+        UITheme.estilizarCampoTexto(txtSalario, "0.00");
 
-        JButton btnLimpiar = new JButton("Limpiar");
+        JPanel panelCampos = new JPanel(new GridLayout(6, 1, 0, 10));
+        panelCampos.setOpaque(false);
+        panelCampos.add(UITheme.crearCampoFormulario("ID Empleado:", txtIdEmpleado));
+        panelCampos.add(UITheme.crearCampoFormulario("Nombre Completo:", txtNombre));
+        panelCampos.add(UITheme.crearCampoFormulario("DPI:", txtDpi));
+        panelCampos.add(UITheme.crearCampoFormulario("Dirección:", txtDireccion));
+        panelCampos.add(UITheme.crearCampoFormulario("Puesto:", txtPuesto));
+        panelCampos.add(UITheme.crearCampoFormulario("Salario Mensual (Q):", txtSalario));
 
-        // Fila 0
-        gbc.gridx = 0; gbc.gridy = 0; formPanel.add(new JLabel("ID Empleado:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; formPanel.add(txtIdEmpleado, gbc);
-        gbc.gridx = 2; gbc.gridy = 0; formPanel.add(new JLabel("Nombre Completo:"), gbc);
-        gbc.gridx = 3; gbc.gridy = 0; formPanel.add(txtNombre, gbc);
+        JPanel contenedorCampos = new JPanel(new BorderLayout());
+        contenedorCampos.setOpaque(false);
+        contenedorCampos.add(panelCampos, BorderLayout.NORTH);
+        panelFormulario.add(contenedorCampos, BorderLayout.CENTER);
 
-        // Fila 1
-        gbc.gridx = 0; gbc.gridy = 1; formPanel.add(new JLabel("DPI:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; formPanel.add(txtDpi, gbc);
-        gbc.gridx = 2; gbc.gridy = 1; formPanel.add(new JLabel("Dirección:"), gbc);
-        gbc.gridx = 3; gbc.gridy = 1; formPanel.add(txtDireccion, gbc);
+        JButton btnLimpiar = new JButton("Nuevo / Limpiar");
+        UITheme.estilizarBotonSecundario(btnLimpiar);
 
-        // Fila 2
-        gbc.gridx = 0; gbc.gridy = 2; formPanel.add(new JLabel("Puesto:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 2; formPanel.add(txtPuesto, gbc);
-        gbc.gridx = 2; gbc.gridy = 2; formPanel.add(new JLabel("Salario (Q):"), gbc);
-        gbc.gridx = 3; gbc.gridy = 2; formPanel.add(txtSalario, gbc);
+        JButton btnGuardar = new JButton("Guardar");
+        UITheme.estilizarBotonPrimario(btnGuardar, new Color(124, 58, 237));
 
-        // Fila 3
-        gbc.gridx = 2; gbc.gridy = 3; formPanel.add(btnLimpiar, gbc);
-        gbc.gridx = 3; gbc.gridy = 3; formPanel.add(btnGuardar, gbc);
+        JPanel panelBotones = new JPanel(new GridLayout(1, 2, 10, 0));
+        panelBotones.setOpaque(false);
+        panelBotones.add(btnLimpiar);
+        panelBotones.add(btnGuardar);
+        panelFormulario.add(panelBotones, BorderLayout.SOUTH);
 
-        add(formPanel, BorderLayout.NORTH);
+        add(panelFormulario, BorderLayout.WEST);
 
-        // Tabla
-        String[] columnas = {"ID Empleado", "Nombre", "DPI", "Dirección", "Puesto", "Salario (Q)"};
-        tableModel = new DefaultTableModel(columnas, 0) {
+        // Tabla derecha con buscador de empleados
+        JPanel panelTabla = new JPanel(new BorderLayout(10, 10));
+        UITheme.estilizarTarjeta(panelTabla);
+
+        lblContador = new JLabel("0 registrados");
+
+        JPanel panelSuperiorTabla = new JPanel(new BorderLayout(10, 8));
+        panelSuperiorTabla.setOpaque(false);
+        panelSuperiorTabla.add(UITheme.crearEncabezadoSeccion("Nómina de Empleados", lblContador), BorderLayout.NORTH);
+
+        JPanel barraBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        barraBusqueda.setOpaque(false);
+        txtBuscar = new JTextField(20);
+        UITheme.estilizarCampoTexto(txtBuscar, "Buscar por ID, nombre o puesto...");
+        JButton btnBuscar = new JButton("Buscar");
+        UITheme.estilizarBotonSecundario(btnBuscar);
+        JButton btnVerTodos = new JButton("Ver Todos");
+        UITheme.estilizarBotonSecundario(btnVerTodos);
+
+        barraBusqueda.add(new JLabel("Buscar:"));
+        barraBusqueda.add(txtBuscar);
+        barraBusqueda.add(btnBuscar);
+        barraBusqueda.add(btnVerTodos);
+
+        panelSuperiorTabla.add(barraBusqueda, BorderLayout.SOUTH);
+        panelTabla.add(panelSuperiorTabla, BorderLayout.NORTH);
+
+        String[] columnas = {"ID Empleado", "Nombre", "DPI", "Dirección", "Puesto", "Salario"};
+        modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
+            public boolean isCellEditable(int fila, int columna) {
                 return false;
             }
         };
 
-        tablaEmpleados = new JTable(tableModel);
-        tablaEmpleados.setRowHeight(24);
-        tablaEmpleados.getTableHeader().setReorderingAllowed(false);
-        JScrollPane scrollPane = new JScrollPane(tablaEmpleados);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Nómina de Empleados"));
+        tablaEmpleados = new JTable(modeloTabla);
+        UITheme.estilizarTabla(tablaEmpleados);
+        panelTabla.add(new JScrollPane(tablaEmpleados), BorderLayout.CENTER);
 
-        add(scrollPane, BorderLayout.CENTER);
+        add(panelTabla, BorderLayout.CENTER);
 
-        // Eventos
-        btnGuardar.addActionListener(e -> guardarEmpleado());
+        // Eventos de botones y seleccion en la tabla
         btnLimpiar.addActionListener(e -> limpiarFormulario());
+        btnGuardar.addActionListener(e -> guardarEmpleado());
+        btnBuscar.addActionListener(e -> recargarTabla(txtBuscar.getText().trim()));
+        btnVerTodos.addActionListener(e -> {
+            txtBuscar.setText("");
+            recargarTabla("");
+        });
+
+        tablaEmpleados.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                cargarEmpleadoSeleccionado();
+            }
+        });
     }
 
-    private void guardarEmpleado() {
-        try {
-            String id = txtIdEmpleado.getText().trim();
-            String nombre = txtNombre.getText().trim();
-            String dpi = txtDpi.getText().trim();
-            String direccion = txtDireccion.getText().trim();
-            String puesto = txtPuesto.getText().trim();
-            String salarioStr = txtSalario.getText().trim();
-
-            if (id.isEmpty() || nombre.isEmpty() || dpi.isEmpty() || salarioStr.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "ID, Nombre, DPI y Salario son obligatorios.", "Validación", JOptionPane.WARNING_MESSAGE);
-                return;
+    // Evento al seleccionar una fila: carga los datos en el formulario
+    private void cargarEmpleadoSeleccionado() {
+        int filaSeleccionada = tablaEmpleados.getSelectedRow();
+        if (filaSeleccionada == -1) {
+            return;
+        }
+        String id = String.valueOf(modeloTabla.getValueAt(filaSeleccionada, 0));
+        for (Empleado emp : controlador.getEmpleados()) {
+            if (emp.getIdEmpleado().equalsIgnoreCase(id)) {
+                txtIdEmpleado.setText(emp.getIdEmpleado());
+                txtNombre.setText(emp.getNombre());
+                txtDpi.setText(emp.getDpi());
+                txtDireccion.setText(emp.getDireccion());
+                txtPuesto.setText(emp.getPuesto());
+                txtSalario.setText(String.valueOf(emp.getSalario()));
+                txtIdEmpleado.setEditable(false);
+                break;
             }
-
-            double salario = Double.parseDouble(salarioStr);
-            if (salario <= 0) {
-                JOptionPane.showMessageDialog(this, "El salario debe ser mayor a 0.", "Validación", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            Empleado emp = new Empleado(id, nombre, dpi, direccion, puesto, salario);
-            controller.registrarEmpleado(emp);
-
-            JOptionPane.showMessageDialog(this, "Empleado registrado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            limpiarFormulario();
-            recargarTabla();
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "El salario debe ser un número válido.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -138,19 +167,74 @@ public class EmpleadoPanel extends JPanel {
         txtDireccion.setText("");
         txtPuesto.setText("");
         txtSalario.setText("");
+        txtIdEmpleado.setEditable(true);
+        tablaEmpleados.clearSelection();
+    }
+
+    // Validar campos y enviar al controlador
+    private void guardarEmpleado() {
+        try {
+            if (!txtIdEmpleado.isEditable()) {
+                JOptionPane.showMessageDialog(this, "Presione 'Nuevo / Limpiar' para registrar otro empleado.");
+                return;
+            }
+
+            String id = txtIdEmpleado.getText().trim();
+            String nombre = txtNombre.getText().trim();
+            String dpi = txtDpi.getText().trim();
+            String direccion = txtDireccion.getText().trim();
+            String puesto = txtPuesto.getText().trim();
+            String salarioTexto = txtSalario.getText().trim();
+
+            if (id.isEmpty() || nombre.isEmpty() || dpi.isEmpty() || salarioTexto.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "ID, Nombre, DPI y Salario son obligatorios.", "Validación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            double salario = Double.parseDouble(salarioTexto);
+            if (salario <= 0) {
+                JOptionPane.showMessageDialog(this, "El salario debe ser mayor a 0.", "Validación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            Empleado emp = new Empleado(id, nombre, dpi, direccion, puesto, salario);
+            controlador.registrarEmpleado(emp);
+
+            JOptionPane.showMessageDialog(this, "Empleado registrado exitosamente.");
+            limpiarFormulario();
+            recargarTabla(txtBuscar.getText().trim());
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "El salario debe ser un número válido.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public void recargarTabla() {
-        tableModel.setRowCount(0);
-        for (Empleado e : controller.getEmpleados()) {
-            tableModel.addRow(new Object[]{
-                    e.getIdEmpleado(),
-                    e.getNombre(),
-                    e.getDpi(),
-                    e.getDireccion(),
-                    e.getPuesto(),
-                    String.format("%.2f", e.getSalario())
-            });
+        recargarTabla("");
+    }
+
+    public void recargarTabla(String filtro) {
+        modeloTabla.setRowCount(0);
+        String busqueda = filtro.toLowerCase();
+
+        for (Empleado e : controlador.getEmpleados()) {
+            boolean coincide = busqueda.isEmpty()
+                    || e.getIdEmpleado().toLowerCase().contains(busqueda)
+                    || e.getNombre().toLowerCase().contains(busqueda)
+                    || e.getPuesto().toLowerCase().contains(busqueda);
+
+            if (coincide) {
+                modeloTabla.addRow(new Object[]{
+                        e.getIdEmpleado(),
+                        e.getNombre(),
+                        e.getDpi(),
+                        e.getDireccion(),
+                        e.getPuesto(),
+                        UITheme.formatearMoneda(e.getSalario())
+                });
+            }
         }
+        lblContador.setText(modeloTabla.getRowCount() + " empleados");
     }
 }

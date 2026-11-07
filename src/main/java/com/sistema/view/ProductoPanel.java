@@ -9,118 +9,154 @@ import java.awt.*;
 
 public class ProductoPanel extends JPanel {
 
-    private final SistemaController controller;
+    private SistemaController controlador;
 
     private JTextField txtCodigo;
     private JTextField txtNombre;
-    private JTextField txtDescripcion;
     private JTextField txtMarca;
     private JTextField txtPrecio;
+    private JTextField txtDescripcion;
 
+    private JButton btnGuardar;
+    private JButton btnLimpiar;
+
+    private JTextField txtBuscar;
+    private JLabel lblContador;
     private JTable tablaProductos;
-    private DefaultTableModel tableModel;
+    private DefaultTableModel modeloTabla;
 
-    public ProductoPanel(SistemaController controller) {
-        this.controller = controller;
-        initComponents();
+    public ProductoPanel(SistemaController controlador) {
+        this.controlador = controlador;
+        iniciarComponentes();
         recargarTabla();
     }
 
-    private void initComponents() {
-        setLayout(new BorderLayout(15, 15));
-        setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+    private void iniciarComponentes() {
+        setLayout(new BorderLayout(20, 0));
+        setBackground(UITheme.FONDO_PRINCIPAL);
+        setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
 
-        // Formulario
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createTitledBorder("Registrar Nuevo Producto"));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 8, 6, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        // Formulario izquierdo para registro y edicion
+        JPanel panelFormulario = new JPanel(new BorderLayout(0, 14));
+        panelFormulario.setPreferredSize(new Dimension(350, 0));
+        UITheme.estilizarTarjeta(panelFormulario);
+        panelFormulario.add(UITheme.crearEncabezadoSeccion("Datos del Producto", null), BorderLayout.NORTH);
 
-        txtCodigo = new JTextField(15);
-        txtNombre = new JTextField(15);
-        txtDescripcion = new JTextField(15);
-        txtMarca = new JTextField(15);
-        txtPrecio = new JTextField(15);
+        txtCodigo = new JTextField();
+        txtNombre = new JTextField();
+        txtMarca = new JTextField();
+        txtPrecio = new JTextField();
+        txtDescripcion = new JTextField();
 
-        JButton btnGuardar = new JButton("Registrar Producto");
-        btnGuardar.setBackground(new Color(33, 150, 243));
-        btnGuardar.setForeground(Color.WHITE);
-        btnGuardar.setFocusPainted(false);
+        UITheme.estilizarCampoTexto(txtCodigo, "Ej. PROD-005");
+        UITheme.estilizarCampoTexto(txtNombre, "Nombre del producto");
+        UITheme.estilizarCampoTexto(txtMarca, "Marca");
+        UITheme.estilizarCampoTexto(txtPrecio, "0.00");
+        UITheme.estilizarCampoTexto(txtDescripcion, "Descripción breve");
 
-        JButton btnLimpiar = new JButton("Limpiar");
+        JPanel panelCampos = new JPanel(new GridLayout(5, 1, 0, 10));
+        panelCampos.setOpaque(false);
+        panelCampos.add(UITheme.crearCampoFormulario("Código:", txtCodigo));
+        panelCampos.add(UITheme.crearCampoFormulario("Nombre:", txtNombre));
+        panelCampos.add(UITheme.crearCampoFormulario("Marca:", txtMarca));
+        panelCampos.add(UITheme.crearCampoFormulario("Precio Unitario (Q):", txtPrecio));
+        panelCampos.add(UITheme.crearCampoFormulario("Descripción:", txtDescripcion));
 
-        // Fila 0
-        gbc.gridx = 0; gbc.gridy = 0; formPanel.add(new JLabel("Código:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; formPanel.add(txtCodigo, gbc);
-        gbc.gridx = 2; gbc.gridy = 0; formPanel.add(new JLabel("Nombre:"), gbc);
-        gbc.gridx = 3; gbc.gridy = 0; formPanel.add(txtNombre, gbc);
+        JPanel contenedorCampos = new JPanel(new BorderLayout());
+        contenedorCampos.setOpaque(false);
+        contenedorCampos.add(panelCampos, BorderLayout.NORTH);
+        panelFormulario.add(contenedorCampos, BorderLayout.CENTER);
 
-        // Fila 1
-        gbc.gridx = 0; gbc.gridy = 1; formPanel.add(new JLabel("Descripción:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; formPanel.add(txtDescripcion, gbc);
-        gbc.gridx = 2; gbc.gridy = 1; formPanel.add(new JLabel("Marca:"), gbc);
-        gbc.gridx = 3; gbc.gridy = 1; formPanel.add(txtMarca, gbc);
+        JPanel panelBotones = new JPanel(new GridLayout(1, 2, 10, 0));
+        panelBotones.setOpaque(false);
 
-        // Fila 2
-        gbc.gridx = 0; gbc.gridy = 2; formPanel.add(new JLabel("Precio (Q):"), gbc);
-        gbc.gridx = 1; gbc.gridy = 2; formPanel.add(txtPrecio, gbc);
-        gbc.gridx = 2; gbc.gridy = 2; formPanel.add(btnLimpiar, gbc);
-        gbc.gridx = 3; gbc.gridy = 2; formPanel.add(btnGuardar, gbc);
+        btnLimpiar = new JButton("Nuevo / Limpiar");
+        UITheme.estilizarBotonSecundario(btnLimpiar);
 
-        add(formPanel, BorderLayout.NORTH);
+        btnGuardar = new JButton("Guardar");
+        UITheme.estilizarBotonPrimario(btnGuardar, UITheme.COLOR_PRIMARIO);
 
-        // Tabla
-        String[] columnas = {"Código", "Nombre", "Descripción", "Marca", "Precio (Q)"};
-        tableModel = new DefaultTableModel(columnas, 0) {
+        panelBotones.add(btnLimpiar);
+        panelBotones.add(btnGuardar);
+        panelFormulario.add(panelBotones, BorderLayout.SOUTH);
+
+        add(panelFormulario, BorderLayout.WEST);
+
+        // Tabla derecha con buscador de productos
+        JPanel panelTabla = new JPanel(new BorderLayout(0, 12));
+        UITheme.estilizarTarjeta(panelTabla);
+
+        lblContador = new JLabel("0 registrados");
+
+        JPanel panelSuperiorTabla = new JPanel(new BorderLayout(0, 8));
+        panelSuperiorTabla.setOpaque(false);
+        panelSuperiorTabla.add(UITheme.crearEncabezadoSeccion("Catálogo de Productos", lblContador), BorderLayout.NORTH);
+
+        JPanel barraBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        barraBusqueda.setOpaque(false);
+        txtBuscar = new JTextField(20);
+        UITheme.estilizarCampoTexto(txtBuscar, "Buscar por código, nombre o marca...");
+        JButton btnBuscar = new JButton("Buscar");
+        UITheme.estilizarBotonSecundario(btnBuscar);
+        JButton btnVerTodos = new JButton("Ver Todos");
+        UITheme.estilizarBotonSecundario(btnVerTodos);
+
+        barraBusqueda.add(new JLabel("Buscar:"));
+        barraBusqueda.add(txtBuscar);
+        barraBusqueda.add(btnBuscar);
+        barraBusqueda.add(btnVerTodos);
+        panelSuperiorTabla.add(barraBusqueda, BorderLayout.SOUTH);
+
+        panelTabla.add(panelSuperiorTabla, BorderLayout.NORTH);
+
+        String[] columnas = {"Código", "Nombre", "Descripción", "Marca", "Precio Unitario"};
+        modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
+            public boolean isCellEditable(int fila, int columna) {
                 return false;
             }
         };
 
-        tablaProductos = new JTable(tableModel);
-        tablaProductos.setRowHeight(24);
-        tablaProductos.getTableHeader().setReorderingAllowed(false);
-        JScrollPane scrollPane = new JScrollPane(tablaProductos);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Catálogo de Productos"));
+        tablaProductos = new JTable(modeloTabla);
+        UITheme.estilizarTabla(tablaProductos);
+        panelTabla.add(new JScrollPane(tablaProductos), BorderLayout.CENTER);
 
-        add(scrollPane, BorderLayout.CENTER);
+        add(panelTabla, BorderLayout.CENTER);
 
-        // Eventos
-        btnGuardar.addActionListener(e -> guardarProducto());
+        // Eventos de botones y seleccion en la tabla
         btnLimpiar.addActionListener(e -> limpiarFormulario());
+        btnGuardar.addActionListener(e -> guardarOModificarProducto());
+        btnBuscar.addActionListener(e -> recargarTabla(txtBuscar.getText().trim()));
+        btnVerTodos.addActionListener(e -> {
+            txtBuscar.setText("");
+            recargarTabla("");
+        });
+
+        tablaProductos.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                cargarProductoSeleccionado();
+            }
+        });
     }
 
-    private void guardarProducto() {
-        try {
-            String codigo = txtCodigo.getText().trim();
-            String nombre = txtNombre.getText().trim();
-            String descripcion = txtDescripcion.getText().trim();
-            String marca = txtMarca.getText().trim();
-            String precioStr = txtPrecio.getText().trim();
-
-            if (codigo.isEmpty() || nombre.isEmpty() || precioStr.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Código, Nombre y Precio son obligatorios.", "Validación", JOptionPane.WARNING_MESSAGE);
-                return;
+    // Evento al seleccionar una fila: carga los datos en el formulario
+    private void cargarProductoSeleccionado() {
+        int filaSeleccionada = tablaProductos.getSelectedRow();
+        if (filaSeleccionada == -1) {
+            return;
+        }
+        String codigo = String.valueOf(modeloTabla.getValueAt(filaSeleccionada, 0));
+        for (Producto p : controlador.getProductos()) {
+            if (p.getCodigo().equalsIgnoreCase(codigo)) {
+                txtCodigo.setText(p.getCodigo());
+                txtNombre.setText(p.getNombre());
+                txtDescripcion.setText(p.getDescripcion());
+                txtMarca.setText(p.getMarca());
+                txtPrecio.setText(String.valueOf(p.getPrecio()));
+                txtCodigo.setEditable(false);
+                btnGuardar.setText("Modificar");
+                break;
             }
-
-            double precio = Double.parseDouble(precioStr);
-            if (precio <= 0) {
-                JOptionPane.showMessageDialog(this, "El precio debe ser mayor a 0.", "Validación", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            Producto p = new Producto(codigo, nombre, descripcion, marca, precio);
-            controller.registrarProducto(p);
-
-            JOptionPane.showMessageDialog(this, "Producto registrado correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            limpiarFormulario();
-            recargarTabla();
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "El precio debe ser un número válido.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -130,18 +166,73 @@ public class ProductoPanel extends JPanel {
         txtDescripcion.setText("");
         txtMarca.setText("");
         txtPrecio.setText("");
+        txtCodigo.setEditable(true);
+        btnGuardar.setText("Guardar");
+        tablaProductos.clearSelection();
+    }
+
+    // Validar campos y enviar al controlador
+    private void guardarOModificarProducto() {
+        try {
+            String codigo = txtCodigo.getText().trim();
+            String nombre = txtNombre.getText().trim();
+            String descripcion = txtDescripcion.getText().trim();
+            String marca = txtMarca.getText().trim();
+            String precioTexto = txtPrecio.getText().trim();
+
+            if (codigo.isEmpty() || nombre.isEmpty() || precioTexto.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Código, Nombre y Precio son obligatorios.", "Validación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            double precio = Double.parseDouble(precioTexto);
+            if (precio <= 0) {
+                JOptionPane.showMessageDialog(this, "El precio debe ser mayor a 0.", "Validación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            Producto p = new Producto(codigo, nombre, descripcion, marca, precio);
+            if (txtCodigo.isEditable()) {
+                controlador.registrarProducto(p);
+                JOptionPane.showMessageDialog(this, "Producto registrado correctamente.");
+            } else {
+                controlador.actualizarProducto(p);
+                JOptionPane.showMessageDialog(this, "Producto modificado correctamente.");
+            }
+
+            limpiarFormulario();
+            recargarTabla(txtBuscar.getText().trim());
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "El precio debe ser un número válido.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public void recargarTabla() {
-        tableModel.setRowCount(0);
-        for (Producto p : controller.getProductos()) {
-            tableModel.addRow(new Object[]{
-                    p.getCodigo(),
-                    p.getNombre(),
-                    p.getDescripcion(),
-                    p.getMarca(),
-                    String.format("%.2f", p.getPrecio())
-            });
+        recargarTabla("");
+    }
+
+    public void recargarTabla(String filtro) {
+        modeloTabla.setRowCount(0);
+        String busqueda = filtro.toLowerCase();
+
+        for (Producto p : controlador.getProductos()) {
+            boolean coincide = busqueda.isEmpty()
+                    || p.getCodigo().toLowerCase().contains(busqueda)
+                    || p.getNombre().toLowerCase().contains(busqueda)
+                    || p.getMarca().toLowerCase().contains(busqueda);
+
+            if (coincide) {
+                modeloTabla.addRow(new Object[]{
+                        p.getCodigo(),
+                        p.getNombre(),
+                        p.getDescripcion(),
+                        p.getMarca(),
+                        UITheme.formatearMoneda(p.getPrecio())
+                });
+            }
         }
+        lblContador.setText(modeloTabla.getRowCount() + " registrados");
     }
 }

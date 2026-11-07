@@ -1,9 +1,7 @@
 package com.sistema.model;
 
-/**
- * Entidad Empleado. Hereda de Persona.
- */
 public class Empleado extends Persona {
+
     private String idEmpleado;
     private String puesto;
     private double salario;

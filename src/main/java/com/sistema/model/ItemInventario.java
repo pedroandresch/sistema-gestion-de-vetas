@@ -1,13 +1,6 @@
 package com.sistema.model;
 
-import java.io.Serializable;
-import java.util.Objects;
-
-/**
- * Representa un producto específico y su stock en inventario.
- */
-public class ItemInventario implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class ItemInventario {
 
     private Producto producto;
     private int stock;
@@ -46,18 +39,6 @@ public class ItemInventario implements Serializable {
             return true;
         }
         return false;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ItemInventario that)) return false;
-        return Objects.equals(producto, that.producto);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(producto);
     }
 
     @Override

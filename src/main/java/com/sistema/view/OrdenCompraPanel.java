@@ -1,7 +1,12 @@
 package com.sistema.view;
 
 import com.sistema.controller.SistemaController;
-import com.sistema.model.*;
+import com.sistema.model.Bodega;
+import com.sistema.model.Cliente;
+import com.sistema.model.DetalleOrden;
+import com.sistema.model.EstadoOrden;
+import com.sistema.model.OrdenCompra;
+import com.sistema.model.Producto;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -11,201 +16,259 @@ import java.util.List;
 
 public class OrdenCompraPanel extends JPanel {
 
-    private final SistemaController controller;
+    private SistemaController controlador;
+    private JTabbedPane pestanasVentas;
 
     private JTextField txtIdOrden;
     private JComboBox<Cliente> cmbCliente;
     private JComboBox<String> cmbBodega;
-
-    // Selector para armar los ítems de la orden (al menos 1 producto)
     private JComboBox<Producto> cmbProducto;
+    private JLabel lblStockDisponible;
     private JTextField txtCantidadItem;
-    private DefaultTableModel cartTableModel;
+
+    private DefaultTableModel modeloCarrito;
     private JTable tablaCarrito;
     private JLabel lblTotalCalculado;
-
     private List<DetalleOrden> itemsTemporales;
 
-    // Tabla de órdenes registradas
-    private DefaultTableModel ordenesTableModel;
+    private DefaultTableModel modeloOrdenes;
     private JTable tablaOrdenes;
+    private DefaultTableModel modeloDetalleOrden;
+    private JLabel lblResumenOrden;
 
-    public OrdenCompraPanel(SistemaController controller) {
-        this.controller = controller;
+    public OrdenCompraPanel(SistemaController controlador) {
+        this.controlador = controlador;
         this.itemsTemporales = new ArrayList<>();
-        initComponents();
+        iniciarComponentes();
         recargarCombos();
         recargarTablaOrdenes();
     }
 
-    private void initComponents() {
-        setLayout(new BorderLayout(15, 15));
-        setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+    private void iniciarComponentes() {
+        setLayout(new BorderLayout());
+        setBackground(UITheme.FONDO_PRINCIPAL);
+        setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
 
-        // Panel Superior: Formulario de Nueva Orden y Carrito de Productos
-        JPanel topPanel = new JPanel(new BorderLayout(10, 10));
-        topPanel.setBorder(BorderFactory.createTitledBorder("Crear Nueva Orden de Compra"));
+        pestanasVentas = new JTabbedPane();
+        pestanasVentas.setFont(UITheme.FUENTE_NEGRITA);
+        pestanasVentas.addTab("Nueva Orden de Compra", crearPanelNuevaOrden());
+        pestanasVentas.addTab("Historial de Órdenes", crearPanelHistorial());
+        add(pestanasVentas, BorderLayout.CENTER);
+    }
 
-        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 5));
-        txtIdOrden = new JTextField(8);
+    // Pestana 1: formulario para armar una nueva orden de compra
+    private JPanel crearPanelNuevaOrden() {
+        JPanel panelNueva = new JPanel(new BorderLayout(14, 14));
+        panelNueva.setBackground(UITheme.FONDO_PRINCIPAL);
+        panelNueva.setBorder(BorderFactory.createEmptyBorder(12, 4, 12, 4));
+
+        JPanel panelEncabezado = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 6));
+        UITheme.estilizarTarjeta(panelEncabezado);
+
+        txtIdOrden = new JTextField(10);
+        UITheme.estilizarCampoTexto(txtIdOrden, "Ej. ORD-002");
         cmbCliente = new JComboBox<>();
+        UITheme.estilizarCombo(cmbCliente);
         cmbBodega = new JComboBox<>();
+        UITheme.estilizarCombo(cmbBodega);
 
-        headerPanel.add(new JLabel("No. Orden:"));
-        headerPanel.add(txtIdOrden);
-        headerPanel.add(new JLabel("Cliente:"));
-        headerPanel.add(cmbCliente);
-        headerPanel.add(new JLabel("Bodega de Despacho:"));
-        headerPanel.add(cmbBodega);
+        panelEncabezado.add(new JLabel("No. Orden:"));
+        panelEncabezado.add(txtIdOrden);
+        panelEncabezado.add(new JLabel("Cliente:"));
+        panelEncabezado.add(cmbCliente);
+        panelEncabezado.add(new JLabel("Bodega:"));
+        panelEncabezado.add(cmbBodega);
+        panelNueva.add(panelEncabezado, BorderLayout.NORTH);
 
-        topPanel.add(headerPanel, BorderLayout.NORTH);
+        // Seccion central para agregar productos al carrito
+        JPanel panelCarrito = new JPanel(new BorderLayout(10, 10));
+        UITheme.estilizarTarjeta(panelCarrito);
 
-        // Panel de selección de productos para la orden
-        JPanel itemSelectPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JPanel barraProducto = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 4));
+        barraProducto.setOpaque(false);
+
         cmbProducto = new JComboBox<>();
+        UITheme.estilizarCombo(cmbProducto);
+        lblStockDisponible = new JLabel("Stock: 0 uds");
+        lblStockDisponible.setFont(UITheme.FUENTE_NEGRITA);
         txtCantidadItem = new JTextField("1", 5);
-        JButton btnAgregarItem = new JButton("Agregar a la Orden");
+        UITheme.estilizarCampoTexto(txtCantidadItem, "Cant.");
+
+        JButton btnAgregarItem = new JButton("Agregar Producto");
+        UITheme.estilizarBotonPrimario(btnAgregarItem, UITheme.COLOR_PRIMARIO);
         JButton btnQuitarItem = new JButton("Quitar Seleccionado");
+        UITheme.estilizarBotonSecundario(btnQuitarItem);
 
-        itemSelectPanel.add(new JLabel("Producto:"));
-        itemSelectPanel.add(cmbProducto);
-        itemSelectPanel.add(new JLabel("Cantidad:"));
-        itemSelectPanel.add(txtCantidadItem);
-        itemSelectPanel.add(btnAgregarItem);
-        itemSelectPanel.add(btnQuitarItem);
+        barraProducto.add(new JLabel("Producto:"));
+        barraProducto.add(cmbProducto);
+        barraProducto.add(lblStockDisponible);
+        barraProducto.add(new JLabel("Cantidad:"));
+        barraProducto.add(txtCantidadItem);
+        barraProducto.add(btnAgregarItem);
+        barraProducto.add(btnQuitarItem);
+        panelCarrito.add(barraProducto, BorderLayout.NORTH);
 
-        // Tabla del carrito temporal de la orden actual
-        String[] cartCols = {"Código", "Producto", "Precio Unitario (Q)", "Cantidad", "Subtotal (Q)"};
-        cartTableModel = new DefaultTableModel(cartCols, 0) {
+        String[] columnasCarrito = {"Código", "Producto", "Precio Unitario", "Cantidad", "Subtotal"};
+        modeloCarrito = new DefaultTableModel(columnasCarrito, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
+            public boolean isCellEditable(int fila, int columna) {
                 return false;
             }
         };
-        tablaCarrito = new JTable(cartTableModel);
-        tablaCarrito.setRowHeight(22);
-        JScrollPane scrollCarrito = new JScrollPane(tablaCarrito);
-        scrollCarrito.setPreferredSize(new Dimension(500, 120));
+        tablaCarrito = new JTable(modeloCarrito);
+        UITheme.estilizarTabla(tablaCarrito);
+        panelCarrito.add(new JScrollPane(tablaCarrito), BorderLayout.CENTER);
 
-        JPanel cartContainer = new JPanel(new BorderLayout(5, 5));
-        cartContainer.add(itemSelectPanel, BorderLayout.NORTH);
-        cartContainer.add(scrollCarrito, BorderLayout.CENTER);
+        // Pie del carrito con el total y botones para registrar la orden
+        JPanel panelInferior = new JPanel(new BorderLayout());
+        panelInferior.setOpaque(false);
 
-        // Barra inferior del formulario (Total y Botones de acción)
-        JPanel footerFormPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 5));
-        lblTotalCalculado = new JLabel("TOTAL: Q0.00");
-        lblTotalCalculado.setFont(new Font("SansSerif", Font.BOLD, 15));
-        lblTotalCalculado.setForeground(new Color(46, 125, 50));
+        lblTotalCalculado = new JLabel("TOTAL: Q 0.00");
+        lblTotalCalculado.setFont(UITheme.FUENTE_TITULO);
+        lblTotalCalculado.setForeground(UITheme.COLOR_EXITO);
 
-        JButton btnGuardarPendiente = new JButton("Guardar como Pendiente");
-        JButton btnCompletarDirecto = new JButton("Completar Venta y Facturar");
-        btnCompletarDirecto.setBackground(new Color(46, 125, 50));
-        btnCompletarDirecto.setForeground(Color.WHITE);
-        btnCompletarDirecto.setFocusPainted(false);
+        JPanel botonesAccion = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        botonesAccion.setOpaque(false);
 
-        footerFormPanel.add(lblTotalCalculado);
-        footerFormPanel.add(btnGuardarPendiente);
-        footerFormPanel.add(btnCompletarDirecto);
+        JButton btnLimpiar = new JButton("Limpiar");
+        UITheme.estilizarBotonSecundario(btnLimpiar);
+        JButton btnPendiente = new JButton("Guardar PENDIENTE");
+        UITheme.estilizarBotonSecundario(btnPendiente);
+        JButton btnCompletar = new JButton("COMPLETAR VENTA");
+        UITheme.estilizarBotonPrimario(btnCompletar, UITheme.COLOR_EXITO);
 
-        cartContainer.add(footerFormPanel, BorderLayout.SOUTH);
-        topPanel.add(cartContainer, BorderLayout.CENTER);
+        botonesAccion.add(btnLimpiar);
+        botonesAccion.add(btnPendiente);
+        botonesAccion.add(btnCompletar);
 
-        add(topPanel, BorderLayout.NORTH);
+        panelInferior.add(lblTotalCalculado, BorderLayout.WEST);
+        panelInferior.add(botonesAccion, BorderLayout.EAST);
+        panelCarrito.add(panelInferior, BorderLayout.SOUTH);
+        panelNueva.add(panelCarrito, BorderLayout.CENTER);
 
-        // Panel Inferior: Historial de Órdenes Registradas con Acciones
-        JPanel historialPanel = new JPanel(new BorderLayout(10, 10));
-        historialPanel.setBorder(BorderFactory.createTitledBorder("Historial de Órdenes de Compra"));
-
-        String[] orderCols = {"No. Orden", "Fecha", "Cliente", "DPI", "Bodega", "Items", "Total (Q)", "Estado"};
-        ordenesTableModel = new DefaultTableModel(orderCols, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        tablaOrdenes = new JTable(ordenesTableModel);
-        tablaOrdenes.setRowHeight(24);
-        tablaOrdenes.getTableHeader().setReorderingAllowed(false);
-        JScrollPane scrollOrdenes = new JScrollPane(tablaOrdenes);
-
-        JPanel accionesOrdenesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
-        JButton btnCompletarSeleccionada = new JButton("Completar Orden Seleccionada (Descuenta Stock)");
-        btnCompletarSeleccionada.setBackground(new Color(33, 150, 243));
-        btnCompletarSeleccionada.setForeground(Color.WHITE);
-
-        JButton btnCancelarSeleccionada = new JButton("Cancelar Orden Seleccionada");
-        btnCancelarSeleccionada.setBackground(new Color(244, 67, 54));
-        btnCancelarSeleccionada.setForeground(Color.WHITE);
-
-        accionesOrdenesPanel.add(btnCompletarSeleccionada);
-        accionesOrdenesPanel.add(btnCancelarSeleccionada);
-
-        historialPanel.add(scrollOrdenes, BorderLayout.CENTER);
-        historialPanel.add(accionesOrdenesPanel, BorderLayout.SOUTH);
-
-        add(historialPanel, BorderLayout.CENTER);
-
-        // Eventos
         btnAgregarItem.addActionListener(e -> agregarItemAlCarrito());
         btnQuitarItem.addActionListener(e -> quitarItemDelCarrito());
-        btnGuardarPendiente.addActionListener(e -> registrarOrden(EstadoOrden.PENDIENTE));
-        btnCompletarDirecto.addActionListener(e -> registrarOrden(EstadoOrden.COMPLETADA));
-        btnCompletarSeleccionada.addActionListener(e -> completarOrdenSeleccionada());
-        btnCancelarSeleccionada.addActionListener(e -> cancelarOrdenSeleccionada());
+        btnLimpiar.addActionListener(e -> limpiarFormularioOrden());
+        btnPendiente.addActionListener(e -> registrarOrden(EstadoOrden.PENDIENTE));
+        btnCompletar.addActionListener(e -> registrarOrden(EstadoOrden.COMPLETADA));
+        cmbBodega.addActionListener(e -> actualizarEtiquetaStock());
+        cmbProducto.addActionListener(e -> actualizarEtiquetaStock());
+
+        return panelNueva;
+    }
+
+    // Pestana 2: historial de ordenes y detalle de productos comprados
+    private JPanel crearPanelHistorial() {
+        JPanel panelHistorial = new JPanel(new BorderLayout(16, 0));
+        panelHistorial.setBackground(UITheme.FONDO_PRINCIPAL);
+        panelHistorial.setBorder(BorderFactory.createEmptyBorder(12, 4, 12, 4));
+
+        JPanel tarjetaOrdenes = new JPanel(new BorderLayout(10, 10));
+        UITheme.estilizarTarjeta(tarjetaOrdenes);
+        tarjetaOrdenes.add(UITheme.crearEncabezadoSeccion("Órdenes Registradas", null), BorderLayout.NORTH);
+
+        String[] columnasOrdenes = {"No. Orden", "Fecha", "Cliente", "Bodega", "Total", "Estado"};
+        modeloOrdenes = new DefaultTableModel(columnasOrdenes, 0) {
+            @Override
+            public boolean isCellEditable(int fila, int columna) {
+                return false;
+            }
+        };
+        tablaOrdenes = new JTable(modeloOrdenes);
+        UITheme.estilizarTabla(tablaOrdenes);
+        tarjetaOrdenes.add(new JScrollPane(tablaOrdenes), BorderLayout.CENTER);
+
+        JPanel botonesHistorial = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        botonesHistorial.setOpaque(false);
+
+        JButton btnCancelar = new JButton("Cancelar Orden");
+        UITheme.estilizarBotonSecundario(btnCancelar);
+        JButton btnCompletar = new JButton("Completar Orden Seleccionada");
+        UITheme.estilizarBotonPrimario(btnCompletar, UITheme.COLOR_PRIMARIO);
+
+        botonesHistorial.add(btnCancelar);
+        botonesHistorial.add(btnCompletar);
+        tarjetaOrdenes.add(botonesHistorial, BorderLayout.SOUTH);
+
+        JPanel tarjetaDetalle = new JPanel(new BorderLayout(10, 10));
+        UITheme.estilizarTarjeta(tarjetaDetalle);
+        tarjetaDetalle.setPreferredSize(new Dimension(360, 0));
+
+        lblResumenOrden = new JLabel("Seleccione una orden");
+        tarjetaDetalle.add(UITheme.crearEncabezadoSeccion("Detalle de la Orden", lblResumenOrden), BorderLayout.NORTH);
+
+        String[] columnasDetalle = {"Código", "Producto", "Cant.", "Subtotal"};
+        modeloDetalleOrden = new DefaultTableModel(columnasDetalle, 0) {
+            @Override
+            public boolean isCellEditable(int fila, int columna) {
+                return false;
+            }
+        };
+        JTable tablaDetalle = new JTable(modeloDetalleOrden);
+        UITheme.estilizarTabla(tablaDetalle);
+        tarjetaDetalle.add(new JScrollPane(tablaDetalle), BorderLayout.CENTER);
+
+        panelHistorial.add(tarjetaOrdenes, BorderLayout.CENTER);
+        panelHistorial.add(tarjetaDetalle, BorderLayout.EAST);
+
+        tablaOrdenes.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                mostrarDetalleOrdenSeleccionada();
+            }
+        });
+        btnCompletar.addActionListener(e -> cambiarEstadoOrdenSeleccionada( true));
+        btnCancelar.addActionListener(e -> cambiarEstadoOrdenSeleccionada(false));
+
+        return panelHistorial;
     }
 
     public void recargarCombos() {
         cmbCliente.removeAllItems();
-        for (Cliente c : controller.getClientes()) {
+        for (Cliente c : controlador.getClientes()) {
             cmbCliente.addItem(c);
         }
-
         cmbBodega.removeAllItems();
-        for (Bodega b : controller.getBodegas()) {
+        for (Bodega b : controlador.getBodegas()) {
             cmbBodega.addItem(b.getIdBodega());
         }
-
         cmbProducto.removeAllItems();
-        for (Producto p : controller.getProductos()) {
+        for (Producto p : controlador.getProductos()) {
             cmbProducto.addItem(p);
         }
+        actualizarEtiquetaStock();
+    }
+
+    private void actualizarEtiquetaStock() {
+        String idBodega = (String) cmbBodega.getSelectedItem();
+        Producto prod = (Producto) cmbProducto.getSelectedItem();
+        if (idBodega == null || prod == null) {
+            lblStockDisponible.setText("Stock: 0 uds");
+            return;
+        }
+        int stock = controlador.consultarStock(idBodega, prod.getCodigo());
+        lblStockDisponible.setText("Stock: " + stock + " uds | " + UITheme.formatearMoneda(prod.getPrecio()));
     }
 
     private void agregarItemAlCarrito() {
-        Producto prod = (Producto) cmbProducto.getSelectedItem();
-        String cantStr = txtCantidadItem.getText().trim();
-
-        if (prod == null || cantStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Seleccione un producto e ingrese la cantidad.", "Validación", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
         try {
-            int cantidad = Integer.parseInt(cantStr);
-            if (cantidad <= 0) {
-                JOptionPane.showMessageDialog(this, "La cantidad debe ser mayor a 0.", "Validación", JOptionPane.WARNING_MESSAGE);
+            Producto prod = (Producto) cmbProducto.getSelectedItem();
+            int cantidad = Integer.parseInt(txtCantidadItem.getText().trim());
+            if (prod == null || cantidad <= 0) {
+                JOptionPane.showMessageDialog(this, "Seleccione un producto y una cantidad mayor a 0.");
                 return;
             }
-
-            // Si ya existe en la orden actual, sumar
-            boolean existe = false;
             for (DetalleOrden d : itemsTemporales) {
                 if (d.getProducto().getCodigo().equalsIgnoreCase(prod.getCodigo())) {
                     d.setCantidad(d.getCantidad() + cantidad);
-                    existe = true;
-                    break;
+                    actualizarTablaCarrito();
+                    return;
                 }
             }
-
-            if (!existe) {
-                itemsTemporales.add(new DetalleOrden(prod, cantidad));
-            }
-
+            itemsTemporales.add(new DetalleOrden(prod, cantidad));
             txtCantidadItem.setText("1");
             actualizarTablaCarrito();
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "La cantidad debe ser un número entero válido.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "La cantidad debe ser un número entero.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -214,107 +277,49 @@ public class OrdenCompraPanel extends JPanel {
         if (fila >= 0 && fila < itemsTemporales.size()) {
             itemsTemporales.remove(fila);
             actualizarTablaCarrito();
-        } else {
-            JOptionPane.showMessageDialog(this, "Seleccione un producto del carrito para quitar.", "Información", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
     private void actualizarTablaCarrito() {
-        cartTableModel.setRowCount(0);
-        double total = 0.0;
+        modeloCarrito.setRowCount(0);
+        double total = 0;
         for (DetalleOrden d : itemsTemporales) {
             total += d.getSubtotal();
-            cartTableModel.addRow(new Object[]{
-                    d.getProducto().getCodigo(),
-                    d.getProducto().getNombre(),
-                    String.format("%.2f", d.getPrecioUnitario()),
-                    d.getCantidad(),
-                    String.format("%.2f", d.getSubtotal())
+            modeloCarrito.addRow(new Object[]{
+                    d.getProducto().getCodigo(), d.getProducto().getNombre(),
+                    UITheme.formatearMoneda(d.getPrecioUnitario()), d.getCantidad(),
+                    UITheme.formatearMoneda(d.getSubtotal())
             });
         }
-        lblTotalCalculado.setText("TOTAL: Q" + String.format("%.2f", total));
+        lblTotalCalculado.setText("TOTAL: " + UITheme.formatearMoneda(total));
     }
 
-    private void registrarOrden(EstadoOrden estadoDeseado) {
+    // Validar campos y registrar la orden de compra en el controlador
+    private void registrarOrden(EstadoOrden estado) {
         try {
             String idOrden = txtIdOrden.getText().trim();
             Cliente cliente = (Cliente) cmbCliente.getSelectedItem();
             String idBodega = (String) cmbBodega.getSelectedItem();
 
-            if (idOrden.isEmpty() || cliente == null || idBodega == null) {
-                JOptionPane.showMessageDialog(this, "No. Orden, Cliente y Bodega de despacho son requeridos.", "Validación", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            if (itemsTemporales.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "La orden de compra debe contener al menos un producto.", "Requisito Obligatorio", JOptionPane.WARNING_MESSAGE);
+            if (idOrden.isEmpty() || cliente == null || idBodega == null || itemsTemporales.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Complete los datos de la orden y agregue al menos un producto.");
                 return;
             }
 
             OrdenCompra orden = new OrdenCompra(idOrden, cliente, idBodega);
-            orden.setEstado(estadoDeseado);
+            orden.setEstado(estado);
             for (DetalleOrden d : itemsTemporales) {
                 orden.agregarDetalle(d.getProducto(), d.getCantidad());
             }
 
-            controller.registrarOrden(orden);
-
-            String msj = (estadoDeseado == EstadoOrden.COMPLETADA)
-                    ? "¡Orden #" + idOrden + " COMPLETADA con éxito!\nSe descontó automáticamente el stock del inventario."
-                    : "Orden #" + idOrden + " registrada como PENDIENTE.";
-
-            JOptionPane.showMessageDialog(this, msj, "Éxito", JOptionPane.INFORMATION_MESSAGE);
-
+            controlador.registrarOrden(orden);
+            JOptionPane.showMessageDialog(this, "Orden registrada correctamente con estado: " + estado);
             limpiarFormularioOrden();
             recargarTablaOrdenes();
+            actualizarEtiquetaStock();
+            pestanasVentas.setSelectedIndex(1);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error al procesar orden", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void completarOrdenSeleccionada() {
-        int fila = tablaOrdenes.getSelectedRow();
-        if (fila < 0) {
-            JOptionPane.showMessageDialog(this, "Seleccione una orden de la tabla para completarla.", "Aviso", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        String idOrden = (String) ordenesTableModel.getValueAt(fila, 0);
-        int resp = JOptionPane.showConfirmDialog(this,
-                "¿Desea completar la orden #" + idOrden + "?\nEsto restará los productos del stock en inventario.",
-                "Confirmar Venta", JOptionPane.YES_NO_OPTION);
-
-        if (resp == JOptionPane.YES_OPTION) {
-            try {
-                controller.completarOrden(idOrden);
-                JOptionPane.showMessageDialog(this, "Orden #" + idOrden + " completada y stock descontado con éxito.", "Venta Exitosa", JOptionPane.INFORMATION_MESSAGE);
-                recargarTablaOrdenes();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error al completar", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    private void cancelarOrdenSeleccionada() {
-        int fila = tablaOrdenes.getSelectedRow();
-        if (fila < 0) {
-            JOptionPane.showMessageDialog(this, "Seleccione una orden de la tabla para cancelarla.", "Aviso", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        String idOrden = (String) ordenesTableModel.getValueAt(fila, 0);
-        int resp = JOptionPane.showConfirmDialog(this,
-                "¿Está seguro de cancelar la orden #" + idOrden + "?",
-                "Confirmar Cancelación", JOptionPane.YES_NO_OPTION);
-
-        if (resp == JOptionPane.YES_OPTION) {
-            try {
-                controller.cancelarOrden(idOrden);
-                JOptionPane.showMessageDialog(this, "Orden #" + idOrden + " cancelada.", "Aviso", JOptionPane.INFORMATION_MESSAGE);
-                recargarTablaOrdenes();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error al cancelar", JOptionPane.ERROR_MESSAGE);
-            }
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -322,27 +327,58 @@ public class OrdenCompraPanel extends JPanel {
         txtIdOrden.setText("");
         itemsTemporales.clear();
         actualizarTablaCarrito();
-        txtCantidadItem.setText("1");
+    }
+
+    // Mostrar los productos de la orden seleccionada en la tabla derecha
+    private void mostrarDetalleOrdenSeleccionada() {
+        int fila = tablaOrdenes.getSelectedRow();
+        modeloDetalleOrden.setRowCount(0);
+        if (fila == -1) {
+            lblResumenOrden.setText("Seleccione una orden");
+            return;
+        }
+        String idOrden = String.valueOf(modeloOrdenes.getValueAt(fila, 0));
+        for (OrdenCompra o : controlador.getOrdenes()) {
+            if (o.getIdOrden().equalsIgnoreCase(idOrden)) {
+                lblResumenOrden.setText(o.getIdOrden() + " (" + o.getEstado() + ")");
+                for (DetalleOrden d : o.getItems()) {
+                    modeloDetalleOrden.addRow(new Object[]{
+                            d.getProducto().getCodigo(), d.getProducto().getNombre(),
+                            d.getCantidad(), UITheme.formatearMoneda(d.getSubtotal())
+                    });
+                }
+                break;
+            }
+        }
+    }
+
+    private void cambiarEstadoOrdenSeleccionada(boolean completar) {
+        int fila = tablaOrdenes.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione una orden de la tabla.");
+            return;
+        }
+        String idOrden = String.valueOf(modeloOrdenes.getValueAt(fila, 0));
+        try {
+            if (completar) {
+                controlador.completarOrden(idOrden);
+                JOptionPane.showMessageDialog(this, "Orden completada y stock descontado.");
+            } else {
+                controlador.cancelarOrden(idOrden);
+                JOptionPane.showMessageDialog(this, "Orden cancelada.");
+            }
+            recargarTablaOrdenes();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public void recargarTablaOrdenes() {
-        ordenesTableModel.setRowCount(0);
-        for (OrdenCompra ord : controller.getOrdenes()) {
-            StringBuilder itemsResumen = new StringBuilder();
-            for (DetalleOrden det : ord.getItems()) {
-                if (itemsResumen.length() > 0) itemsResumen.append(", ");
-                itemsResumen.append(det.getProducto().getNombre()).append(" x").append(det.getCantidad());
-            }
-
-            ordenesTableModel.addRow(new Object[]{
-                    ord.getIdOrden(),
-                    ord.getFecha(),
-                    ord.getCliente().getNombre(),
-                    ord.getCliente().getDpi(),
-                    ord.getIdBodega(),
-                    itemsResumen.toString(),
-                    String.format("%.2f", ord.getTotal()),
-                    ord.getEstado()
+        modeloOrdenes.setRowCount(0);
+        for (OrdenCompra ord : controlador.getOrdenes()) {
+            modeloOrdenes.addRow(new Object[]{
+                    ord.getIdOrden(), ord.getFecha(), ord.getCliente().getNombre(),
+                    ord.getIdBodega(), UITheme.formatearMoneda(ord.getTotal()), ord.getEstado()
             });
         }
     }

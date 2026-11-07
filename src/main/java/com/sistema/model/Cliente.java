@@ -1,9 +1,11 @@
+/**
+ * Módulo de Gestión de Clientes
+ * @author [Dannii-12]
+ */
 package com.sistema.model;
 
-/**
- * Entidad Cliente. Hereda de Persona.
- */
 public class Cliente extends Persona {
+
     private String fechaNacimiento;
     private TipoCliente tipo;
 
@@ -38,3 +40,4 @@ public class Cliente extends Persona {
         return getNombre() + " - " + tipo + " (DPI: " + getDpi() + ")";
     }
 }
+// Modulo desarrollado y gestionado por Persona 1

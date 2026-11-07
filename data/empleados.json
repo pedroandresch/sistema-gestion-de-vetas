@@ -2,7 +2,7 @@
   {
     "idEmpleado": "EMP-01",
     "puesto": "Jefe de Almacén",
-    "salario": 7500.00,
+    "salario": 7500.0,
     "dpi": "3012457890101",
     "nombre": "Roberto Morales",
     "direccion": "Zona 7, Mixco"
@@ -10,9 +10,25 @@
   {
     "idEmpleado": "EMP-02",
     "puesto": "Encargado de Despacho",
-    "salario": 4800.00,
+    "salario": 4800.0,
     "dpi": "2987145230101",
     "nombre": "Andrea Castillo",
     "direccion": "Zona 11, Las Charcas"
+  },
+  {
+    "idEmpleado": "420420",
+    "puesto": "Jefe de Area",
+    "salario": 35000.0,
+    "dpi": "3031100129",
+    "nombre": "pedro Andres Chajon Zet",
+    "direccion": ""
+  },
+  {
+    "idEmpleado": "5",
+    "puesto": "jefe",
+    "salario": 5000.0,
+    "dpi": "4528754850110",
+    "nombre": "Carlos Garcia",
+    "direccion": "san juan"
   }
 ]

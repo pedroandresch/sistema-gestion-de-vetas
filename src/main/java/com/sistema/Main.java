@@ -7,20 +7,15 @@ import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
-        // Inicializar Look & Feel moderno FlatLaf
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
-        } catch (Throwable e) {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {
-            }
+        } catch (Exception e) {
+            System.out.println("No se pudo cargar el tema visual: " + e.getMessage());
         }
 
-        // Lanzar interfaz gráfica en el Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
-            MainFrame frame = new MainFrame();
-            frame.setVisible(true);
+            MainFrame ventana = new MainFrame();
+            ventana.setVisible(true);
         });
     }
 }

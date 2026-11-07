@@ -1,5 +1,6 @@
 # Archivos de compilacion
 target/
+bin/
 *.class
 
 # IDEs

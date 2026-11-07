@@ -1,0 +1,70 @@
+[
+  {
+    "idOrden": "ORD-001",
+    "cliente": {
+      "fechaNacimiento": "1992-05-14",
+      "tipo": "VIP",
+      "dpi": "2541896320101",
+      "nombre": "Carlos Estuardo Gómez",
+      "direccion": "Zona 10, Ciudad de Guatemala"
+    },
+    "idBodega": "BOD-CENTRAL",
+    "items": [
+      {
+        "producto": {
+          "codigo": "PROD-001",
+          "nombre": "Laptop ThinkPad L14",
+          "descripcion": "Intel Core i7, 16GB RAM, 512GB SSD",
+          "marca": "Lenovo",
+          "precio": 6500.0
+        },
+        "cantidad": 1,
+        "precioUnitario": 6500.0,
+        "subtotal": 6500.0
+      }
+    ],
+    "fecha": "2026-10-28 10:00:00",
+    "total": 6500.0,
+    "estado": "COMPLETADA"
+  },
+  {
+    "idOrden": "00001",
+    "cliente": {
+      "fechaNacimiento": "1992-05-14",
+      "tipo": "VIP",
+      "dpi": "2541896320101",
+      "nombre": "Carlos Estuardo Gómez",
+      "direccion": "Zona 10, Ciudad de Guatemala"
+    },
+    "idBodega": "BOD-CENTRAL",
+    "items": [
+      {
+        "producto": {
+          "codigo": "PROD-001",
+          "nombre": "Laptop ThinkPad L14",
+          "descripcion": "Intel Core i7, 16GB RAM, 512GB SSD",
+          "marca": "Lenovo",
+          "precio": 6500.0
+        },
+        "cantidad": 1,
+        "precioUnitario": 6500.0,
+        "subtotal": 6500.0
+      },
+      {
+        "producto": {
+          "codigo": "PROD-002",
+          "nombre": "Monitor Gamer 27\"",
+          "descripcion": "IPS 165Hz 1ms QHD",
+          "marca": "LG",
+          "precio": 2200.0
+        },
+        "cantidad": 1,
+        "precioUnitario": 2200.0,
+        "subtotal": 2200.0
+      }
+    ],
+    "fecha": "2026-10-28 16:38:02",
+    "total": 8700.0,
+    "estado": "COMPLETADA"
+  }
+]

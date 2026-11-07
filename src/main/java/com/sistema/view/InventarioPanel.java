@@ -9,167 +9,176 @@ import com.sistema.model.Producto;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.Optional;
 
 public class InventarioPanel extends JPanel {
 
-    private final SistemaController controller;
+    private SistemaController controlador;
 
     private JComboBox<String> cmbBodega;
     private JComboBox<Producto> cmbProducto;
     private JTextField txtCantidad;
 
+    private JLabel lblResumenCapacidad;
+    private JLabel lblContador;
     private JTable tablaInventario;
-    private DefaultTableModel tableModel;
+    private DefaultTableModel modeloTabla;
 
-    private JLabel lblCapacidadInfo;
-
-    public InventarioPanel(SistemaController controller) {
-        this.controller = controller;
-        initComponents();
+    public InventarioPanel(SistemaController controlador) {
+        this.controlador = controlador;
+        iniciarComponentes();
         recargarCombos();
         recargarTabla();
     }
 
-    private void initComponents() {
-        setLayout(new BorderLayout(15, 15));
-        setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+    private void iniciarComponentes() {
+        setLayout(new BorderLayout(20, 20));
+        setBackground(UITheme.FONDO_PRINCIPAL);
+        setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
 
-        // Formulario
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createTitledBorder("Registrar / Ingresar Stock al Inventario"));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 8, 6, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        // Panel superior para ingresar existencias a una bodega
+        JPanel panelFormulario = new JPanel(new BorderLayout(12, 12));
+        UITheme.estilizarTarjeta(panelFormulario);
+
+        lblResumenCapacidad = new JLabel("Capacidad: -");
+        panelFormulario.add(UITheme.crearEncabezadoSeccion("Ingreso de Stock a Bodega", lblResumenCapacidad), BorderLayout.NORTH);
+
+        JPanel panelCampos = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 6));
+        panelCampos.setOpaque(false);
 
         cmbBodega = new JComboBox<>();
         cmbProducto = new JComboBox<>();
-        txtCantidad = new JTextField(10);
-        lblCapacidadInfo = new JLabel("Ocupación: -");
-        lblCapacidadInfo.setFont(new Font("SansSerif", Font.BOLD, 12));
+        txtCantidad = new JTextField(8);
 
-        JButton btnAgregarStock = new JButton("Ingresar Stock");
-        btnAgregarStock.setBackground(new Color(0, 150, 136));
-        btnAgregarStock.setForeground(Color.WHITE);
-        btnAgregarStock.setFocusPainted(false);
+        UITheme.estilizarCombo(cmbBodega);
+        UITheme.estilizarCombo(cmbProducto);
+        UITheme.estilizarCampoTexto(txtCantidad, "Cantidad");
 
-        // Fila 0
-        gbc.gridx = 0; gbc.gridy = 0; formPanel.add(new JLabel("Seleccionar Bodega:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; formPanel.add(cmbBodega, gbc);
-        gbc.gridx = 2; gbc.gridy = 0; formPanel.add(new JLabel("Producto:"), gbc);
-        gbc.gridx = 3; gbc.gridy = 0; formPanel.add(cmbProducto, gbc);
+        JButton btnAgregarStock = new JButton("Ingresar Existencias");
+        UITheme.estilizarBotonPrimario(btnAgregarStock, new Color(13, 148, 136));
 
-        // Fila 1
-        gbc.gridx = 0; gbc.gridy = 1; formPanel.add(new JLabel("Cantidad a ingresar:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; formPanel.add(txtCantidad, gbc);
-        gbc.gridx = 2; gbc.gridy = 1; formPanel.add(lblCapacidadInfo, gbc);
-        gbc.gridx = 3; gbc.gridy = 1; formPanel.add(btnAgregarStock, gbc);
+        panelCampos.add(new JLabel("Bodega:"));
+        panelCampos.add(cmbBodega);
+        panelCampos.add(new JLabel("Producto:"));
+        panelCampos.add(cmbProducto);
+        panelCampos.add(new JLabel("Cantidad:"));
+        panelCampos.add(txtCantidad);
+        panelCampos.add(btnAgregarStock);
 
-        add(formPanel, BorderLayout.NORTH);
+        panelFormulario.add(panelCampos, BorderLayout.CENTER);
+        add(panelFormulario, BorderLayout.NORTH);
 
-        // Tabla
-        String[] columnas = {"Bodega", "Código Producto", "Producto", "Marca", "Precio Unitario (Q)", "Stock Disponible"};
-        tableModel = new DefaultTableModel(columnas, 0) {
+        // Tabla inferior con las existencias actuales de la bodega
+        JPanel panelTabla = new JPanel(new BorderLayout(10, 10));
+        UITheme.estilizarTarjeta(panelTabla);
+
+        lblContador = new JLabel("0 productos");
+        panelTabla.add(UITheme.crearEncabezadoSeccion("Existencias en Bodega", lblContador), BorderLayout.NORTH);
+
+        String[] columnas = {"Bodega", "Código", "Producto", "Marca", "Precio Unitario", "Stock Disponible"};
+        modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
+            public boolean isCellEditable(int fila, int columna) {
                 return false;
             }
         };
 
-        tablaInventario = new JTable(tableModel);
-        tablaInventario.setRowHeight(24);
-        tablaInventario.getTableHeader().setReorderingAllowed(false);
-        JScrollPane scrollPane = new JScrollPane(tablaInventario);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Inventario por Bodega"));
+        tablaInventario = new JTable(modeloTabla);
+        UITheme.estilizarTabla(tablaInventario);
+        panelTabla.add(new JScrollPane(tablaInventario), BorderLayout.CENTER);
 
-        add(scrollPane, BorderLayout.CENTER);
+        add(panelTabla, BorderLayout.CENTER);
 
-        // Eventos
+        // Eventos para actualizar tabla e ingresar stock
         btnAgregarStock.addActionListener(e -> ingresarStock());
-        cmbBodega.addActionListener(e -> {
-            actualizarInfoCapacidad();
-            recargarTabla();
-        });
+        cmbBodega.addActionListener(e -> recargarTabla());
     }
 
     public void recargarCombos() {
+        String bodegaPrevia = (String) cmbBodega.getSelectedItem();
+
         cmbBodega.removeAllItems();
-        for (Bodega b : controller.getBodegas()) {
+        for (Bodega b : controlador.getBodegas()) {
             cmbBodega.addItem(b.getIdBodega());
+        }
+        if (bodegaPrevia != null) {
+            cmbBodega.setSelectedItem(bodegaPrevia);
         }
 
         cmbProducto.removeAllItems();
-        for (Producto p : controller.getProductos()) {
+        for (Producto p : controlador.getProductos()) {
             cmbProducto.addItem(p);
         }
-
-        actualizarInfoCapacidad();
     }
 
+    // Mostrar capacidad ocupada y disponible de la bodega seleccionada
     private void actualizarInfoCapacidad() {
         String idBodega = (String) cmbBodega.getSelectedItem();
         if (idBodega == null) {
-            lblCapacidadInfo.setText("Ocupación: -");
+            lblResumenCapacidad.setText("Sin bodega seleccionada");
             return;
         }
 
-        Optional<Bodega> bOpt = controller.buscarBodega(idBodega);
-        if (bOpt.isPresent()) {
-            Bodega b = bOpt.get();
-            Inventario inv = controller.obtenerOCrearInventario(idBodega);
-            int ocupadas = inv.getTotalUnidadesAlmacenadas();
-            lblCapacidadInfo.setText("Ocupación: " + ocupadas + " / " + b.getCapacidad() + " unidades");
+        for (Bodega b : controlador.getBodegas()) {
+            if (b.getIdBodega().equalsIgnoreCase(idBodega)) {
+                Inventario inv = controlador.obtenerOCrearInventario(idBodega);
+                int ocupadas = inv.getTotalUnidadesAlmacenadas();
+                int libre = Math.max(0, b.getCapacidad() - ocupadas);
+                lblResumenCapacidad.setText("Ocupado: " + ocupadas + " / " + b.getCapacidad() + " uds (Libre: " + libre + " uds)");
+                break;
+            }
         }
     }
 
+    // Validar campos y enviar al controlador
     private void ingresarStock() {
         try {
             String idBodega = (String) cmbBodega.getSelectedItem();
             Producto producto = (Producto) cmbProducto.getSelectedItem();
-            String cantStr = txtCantidad.getText().trim();
+            String cantTexto = txtCantidad.getText().trim();
 
-            if (idBodega == null || producto == null || cantStr.isEmpty()) {
+            if (idBodega == null || producto == null || cantTexto.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Seleccione bodega, producto e ingrese la cantidad.", "Validación", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            int cantidad = Integer.parseInt(cantStr);
+            int cantidad = Integer.parseInt(cantTexto);
             if (cantidad <= 0) {
                 JOptionPane.showMessageDialog(this, "La cantidad debe ser mayor a 0.", "Validación", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            controller.registrarStock(idBodega, producto, cantidad);
+            controlador.registrarStock(idBodega, producto, cantidad);
 
-            JOptionPane.showMessageDialog(this, "Stock ingresado exitosamente en bodega " + idBodega + ".", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Stock ingresado exitosamente en bodega " + idBodega + ".");
             txtCantidad.setText("");
-            actualizarInfoCapacidad();
             recargarTabla();
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "La cantidad debe ser un número entero válido.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "La cantidad debe ser un número entero válido.", "Error", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error al registrar stock", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public void recargarTabla() {
-        tableModel.setRowCount(0);
+        actualizarInfoCapacidad();
+        modeloTabla.setRowCount(0);
         String filtroBodega = (String) cmbBodega.getSelectedItem();
 
-        for (Inventario inv : controller.getInventarios()) {
+        for (Inventario inv : controlador.getInventarios()) {
             if (filtroBodega != null && !filtroBodega.equalsIgnoreCase(inv.getIdBodega())) {
                 continue;
             }
             for (ItemInventario item : inv.getItems()) {
-                tableModel.addRow(new Object[]{
+                modeloTabla.addRow(new Object[]{
                         inv.getIdBodega(),
                         item.getProducto().getCodigo(),
                         item.getProducto().getNombre(),
                         item.getProducto().getMarca(),
-                        String.format("%.2f", item.getProducto().getPrecio()),
+                        UITheme.formatearMoneda(item.getProducto().getPrecio()),
                         item.getStock()
                 });
             }
         }
+        lblContador.setText(modeloTabla.getRowCount() + " productos en lista");
     }
 }

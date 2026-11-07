@@ -1,0 +1,41 @@
+[
+  {
+    "idBodega": "BOD-CENTRAL",
+    "empleado": {
+      "idEmpleado": "EMP-01",
+      "puesto": "Jefe de Almacén",
+      "salario": 7500.0,
+      "dpi": "3012457890101",
+      "nombre": "Roberto Morales",
+      "direccion": "Zona 7, Mixco"
+    },
+    "capacidad": 1000,
+    "direccion": "Calzada Roosevelt km 14"
+  },
+  {
+    "idBodega": "BOD-NORTE",
+    "empleado": {
+      "idEmpleado": "EMP-02",
+      "puesto": "Encargado de Despacho",
+      "salario": 4800.0,
+      "dpi": "2987145230101",
+      "nombre": "Andrea Castillo",
+      "direccion": "Zona 11, Las Charcas"
+    },
+    "capacidad": 500,
+    "direccion": "Carretera al Atlántico Zona 17"
+  },
+  {
+    "idBodega": "bod-02",
+    "empleado": {
+      "idEmpleado": "420420",
+      "puesto": "Jefe de Area",
+      "salario": 35000.0,
+      "dpi": "3031100129",
+      "nombre": "pedro Andres Chajon Zet",
+      "direccion": ""
+    },
+    "capacidad": 1500,
+    "direccion": "San Juan"
+  }
+]

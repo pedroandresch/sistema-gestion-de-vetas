@@ -10,7 +10,7 @@ import java.awt.*;
 
 public class ClientePanel extends JPanel {
 
-    private final SistemaController controller;
+    private SistemaController controlador;
 
     private JTextField txtDpi;
     private JTextField txtNombre;
@@ -18,82 +18,162 @@ public class ClientePanel extends JPanel {
     private JTextField txtFechaNacimiento;
     private JComboBox<TipoCliente> cmbTipo;
 
-    private JTable tablaClientes;
-    private DefaultTableModel tableModel;
+    private JButton btnGuardar;
+    private JButton btnLimpiar;
 
-    public ClientePanel(SistemaController controller) {
-        this.controller = controller;
-        initComponents();
+    private JTextField txtBuscar;
+    private JLabel lblContador;
+    private JTable tablaClientes;
+    private DefaultTableModel modeloTabla;
+
+    public ClientePanel(SistemaController controlador) {
+        this.controlador = controlador;
+        iniciarComponentes();
         recargarTabla();
     }
 
-    private void initComponents() {
-        setLayout(new BorderLayout(15, 15));
-        setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+    private void iniciarComponentes() {
+        setLayout(new BorderLayout(20, 0));
+        setBackground(UITheme.FONDO_PRINCIPAL);
+        setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
 
-        // Formulario
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createTitledBorder("Registrar Nuevo Cliente"));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 8, 6, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        // Formulario izquierdo para registro y edicion
+        JPanel panelFormulario = new JPanel(new BorderLayout(0, 14));
+        panelFormulario.setPreferredSize(new Dimension(350, 0));
+        UITheme.estilizarTarjeta(panelFormulario);
+        panelFormulario.add(UITheme.crearEncabezadoSeccion("Datos del Cliente", null), BorderLayout.NORTH);
 
-        txtDpi = new JTextField(15);
-        txtNombre = new JTextField(15);
-        txtDireccion = new JTextField(15);
-        txtFechaNacimiento = new JTextField(15);
+        txtDpi = new JTextField();
+        txtNombre = new JTextField();
+        txtDireccion = new JTextField();
+        txtFechaNacimiento = new JTextField();
         cmbTipo = new JComboBox<>(TipoCliente.values());
 
-        JButton btnGuardar = new JButton("Registrar Cliente");
-        btnGuardar.setBackground(new Color(76, 175, 80));
-        btnGuardar.setForeground(Color.WHITE);
-        btnGuardar.setFocusPainted(false);
+        UITheme.estilizarCampoTexto(txtDpi, "13 dígitos");
+        UITheme.estilizarCampoTexto(txtNombre, "Nombre completo");
+        UITheme.estilizarCampoTexto(txtDireccion, "Dirección");
+        UITheme.estilizarCampoTexto(txtFechaNacimiento, "AAAA-MM-DD");
+        UITheme.estilizarCombo(cmbTipo);
 
-        JButton btnLimpiar = new JButton("Limpiar");
+        JPanel panelCampos = new JPanel(new GridLayout(5, 1, 0, 10));
+        panelCampos.setOpaque(false);
+        panelCampos.add(UITheme.crearCampoFormulario("DPI:", txtDpi));
+        panelCampos.add(UITheme.crearCampoFormulario("Nombre Completo:", txtNombre));
+        panelCampos.add(UITheme.crearCampoFormulario("Dirección:", txtDireccion));
+        panelCampos.add(UITheme.crearCampoFormulario("Fecha de Nacimiento:", txtFechaNacimiento));
+        panelCampos.add(UITheme.crearCampoFormulario("Tipo de Cliente:", cmbTipo));
 
-        // Fila 0
-        gbc.gridx = 0; gbc.gridy = 0; formPanel.add(new JLabel("DPI:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; formPanel.add(txtDpi, gbc);
-        gbc.gridx = 2; gbc.gridy = 0; formPanel.add(new JLabel("Nombre Completo:"), gbc);
-        gbc.gridx = 3; gbc.gridy = 0; formPanel.add(txtNombre, gbc);
+        JPanel contenedorCampos = new JPanel(new BorderLayout());
+        contenedorCampos.setOpaque(false);
+        contenedorCampos.add(panelCampos, BorderLayout.NORTH);
+        panelFormulario.add(contenedorCampos, BorderLayout.CENTER);
 
-        // Fila 1
-        gbc.gridx = 0; gbc.gridy = 1; formPanel.add(new JLabel("Dirección:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; formPanel.add(txtDireccion, gbc);
-        gbc.gridx = 2; gbc.gridy = 1; formPanel.add(new JLabel("Fecha Nac. (AAAA-MM-DD):"), gbc);
-        gbc.gridx = 3; gbc.gridy = 1; formPanel.add(txtFechaNacimiento, gbc);
+        JPanel panelBotones = new JPanel(new GridLayout(1, 2, 10, 0));
+        panelBotones.setOpaque(false);
 
-        // Fila 2
-        gbc.gridx = 0; gbc.gridy = 2; formPanel.add(new JLabel("Tipo de Cliente:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 2; formPanel.add(cmbTipo, gbc);
-        gbc.gridx = 2; gbc.gridy = 2; formPanel.add(btnLimpiar, gbc);
-        gbc.gridx = 3; gbc.gridy = 2; formPanel.add(btnGuardar, gbc);
+        btnLimpiar = new JButton("Nuevo / Limpiar");
+        UITheme.estilizarBotonSecundario(btnLimpiar);
 
-        add(formPanel, BorderLayout.NORTH);
+        btnGuardar = new JButton("Guardar");
+        UITheme.estilizarBotonPrimario(btnGuardar, UITheme.COLOR_EXITO);
 
-        // Tabla
+        panelBotones.add(btnLimpiar);
+        panelBotones.add(btnGuardar);
+        panelFormulario.add(panelBotones, BorderLayout.SOUTH);
+
+        add(panelFormulario, BorderLayout.WEST);
+
+        // Tabla derecha con buscador de clientes
+        JPanel panelTabla = new JPanel(new BorderLayout(0, 12));
+        UITheme.estilizarTarjeta(panelTabla);
+
+        lblContador = new JLabel("0 registrados");
+
+        JPanel panelSuperiorTabla = new JPanel(new BorderLayout(0, 8));
+        panelSuperiorTabla.setOpaque(false);
+        panelSuperiorTabla.add(UITheme.crearEncabezadoSeccion("Directorio de Clientes", lblContador), BorderLayout.NORTH);
+
+        JPanel barraBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        barraBusqueda.setOpaque(false);
+        txtBuscar = new JTextField(20);
+        UITheme.estilizarCampoTexto(txtBuscar, "Buscar por DPI o nombre...");
+        JButton btnBuscar = new JButton("Buscar");
+        UITheme.estilizarBotonSecundario(btnBuscar);
+        JButton btnVerTodos = new JButton("Ver Todos");
+        UITheme.estilizarBotonSecundario(btnVerTodos);
+
+        barraBusqueda.add(new JLabel("Buscar:"));
+        barraBusqueda.add(txtBuscar);
+        barraBusqueda.add(btnBuscar);
+        barraBusqueda.add(btnVerTodos);
+        panelSuperiorTabla.add(barraBusqueda, BorderLayout.SOUTH);
+
+        panelTabla.add(panelSuperiorTabla, BorderLayout.NORTH);
+
         String[] columnas = {"DPI", "Nombre", "Dirección", "Fecha Nacimiento", "Tipo Cliente"};
-        tableModel = new DefaultTableModel(columnas, 0) {
+        modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
+            public boolean isCellEditable(int fila, int columna) {
                 return false;
             }
         };
 
-        tablaClientes = new JTable(tableModel);
-        tablaClientes.setRowHeight(24);
-        tablaClientes.getTableHeader().setReorderingAllowed(false);
-        JScrollPane scrollPane = new JScrollPane(tablaClientes);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Listado de Clientes"));
+        tablaClientes = new JTable(modeloTabla);
+        UITheme.estilizarTabla(tablaClientes);
+        panelTabla.add(new JScrollPane(tablaClientes), BorderLayout.CENTER);
 
-        add(scrollPane, BorderLayout.CENTER);
+        add(panelTabla, BorderLayout.CENTER);
 
-        // Eventos
-        btnGuardar.addActionListener(e -> guardarCliente());
+        // Eventos de botones y seleccion de fila
         btnLimpiar.addActionListener(e -> limpiarFormulario());
+        btnGuardar.addActionListener(e -> guardarOModificarCliente());
+        btnBuscar.addActionListener(e -> recargarTabla(txtBuscar.getText().trim()));
+        btnVerTodos.addActionListener(e -> {
+            txtBuscar.setText("");
+            recargarTabla("");
+        });
+
+        tablaClientes.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                cargarClienteSeleccionado();
+            }
+        });
     }
 
-    private void guardarCliente() {
+    // Evento al seleccionar una fila: carga los datos en el formulario
+    private void cargarClienteSeleccionado() {
+        int filaSeleccionada = tablaClientes.getSelectedRow();
+        if (filaSeleccionada == -1) {
+            return;
+        }
+        String dpi = String.valueOf(modeloTabla.getValueAt(filaSeleccionada, 0));
+        for (Cliente c : controlador.getClientes()) {
+            if (c.getDpi().equalsIgnoreCase(dpi)) {
+                txtDpi.setText(c.getDpi());
+                txtNombre.setText(c.getNombre());
+                txtDireccion.setText(c.getDireccion());
+                txtFechaNacimiento.setText(c.getFechaNacimiento());
+                cmbTipo.setSelectedItem(c.getTipo());
+                txtDpi.setEditable(false);
+                btnGuardar.setText("Modificar");
+                break;
+            }
+        }
+    }
+
+    private void limpiarFormulario() {
+        txtDpi.setText("");
+        txtNombre.setText("");
+        txtDireccion.setText("");
+        txtFechaNacimiento.setText("");
+        cmbTipo.setSelectedIndex(0);
+        txtDpi.setEditable(true);
+        btnGuardar.setText("Guardar");
+        tablaClientes.clearSelection();
+    }
+
+    // Validar campos y enviar al controlador
+    private void guardarOModificarCliente() {
         try {
             String dpi = txtDpi.getText().trim();
             String nombre = txtNombre.getText().trim();
@@ -107,34 +187,44 @@ public class ClientePanel extends JPanel {
             }
 
             Cliente c = new Cliente(dpi, nombre, direccion, fecha, tipo);
-            controller.registrarCliente(c);
+            if (txtDpi.isEditable()) {
+                controlador.registrarCliente(c);
+                JOptionPane.showMessageDialog(this, "Cliente registrado exitosamente.");
+            } else {
+                controlador.actualizarCliente(c);
+                JOptionPane.showMessageDialog(this, "Cliente modificado exitosamente.");
+            }
 
-            JOptionPane.showMessageDialog(this, "Cliente registrado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             limpiarFormulario();
-            recargarTabla();
+            recargarTabla(txtBuscar.getText().trim());
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void limpiarFormulario() {
-        txtDpi.setText("");
-        txtNombre.setText("");
-        txtDireccion.setText("");
-        txtFechaNacimiento.setText("");
-        cmbTipo.setSelectedIndex(0);
+    public void recargarTabla() {
+        recargarTabla("");
     }
 
-    public void recargarTabla() {
-        tableModel.setRowCount(0);
-        for (Cliente c : controller.getClientes()) {
-            tableModel.addRow(new Object[]{
-                    c.getDpi(),
-                    c.getNombre(),
-                    c.getDireccion(),
-                    c.getFechaNacimiento(),
-                    c.getTipo()
-            });
+    public void recargarTabla(String filtro) {
+        modeloTabla.setRowCount(0);
+        String busqueda = filtro.toLowerCase();
+
+        for (Cliente c : controlador.getClientes()) {
+            boolean coincide = busqueda.isEmpty()
+                    || c.getDpi().toLowerCase().contains(busqueda)
+                    || c.getNombre().toLowerCase().contains(busqueda);
+
+            if (coincide) {
+                modeloTabla.addRow(new Object[]{
+                        c.getDpi(),
+                        c.getNombre(),
+                        c.getDireccion(),
+                        c.getFechaNacimiento(),
+                        c.getTipo()
+                });
+            }
         }
+        lblContador.setText(modeloTabla.getRowCount() + " registrados");
     }
 }

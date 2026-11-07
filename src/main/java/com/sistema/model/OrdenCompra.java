@@ -1,23 +1,15 @@
 package com.sistema.model;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-/**
- * Entidad Orden de Compra.
- * Debe permitir registrar al menos un producto, calcular total
- * y gestionar su estado (PENDIENTE, COMPLETADA, CANCELADA).
- */
-public class OrdenCompra implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class OrdenCompra {
 
     private String idOrden;
     private Cliente cliente;
-    private String idBodega; // Bodega de donde sale el stock
+    private String idBodega;
     private List<DetalleOrden> items;
     private String fecha;
     private double total;
@@ -75,6 +67,7 @@ public class OrdenCompra implements Serializable {
         calcularTotal();
     }
 
+    // Agrega un producto a la orden o suma la cantidad si ya estaba agregado
     public void agregarDetalle(Producto producto, int cantidad) {
         for (DetalleOrden detalle : getItems()) {
             if (detalle.getProducto().getCodigo().equalsIgnoreCase(producto.getCodigo())) {
@@ -88,16 +81,24 @@ public class OrdenCompra implements Serializable {
     }
 
     public void eliminarDetalle(String codigoProducto) {
-        getItems().removeIf(d -> d.getProducto().getCodigo().equalsIgnoreCase(codigoProducto));
+        List<DetalleOrden> lista = getItems();
+        for (int i = 0; i < lista.size(); i++) {
+            DetalleOrden detalle = lista.get(i);
+            if (detalle.getProducto().getCodigo().equalsIgnoreCase(codigoProducto)) {
+                lista.remove(i);
+                break;
+            }
+        }
         calcularTotal();
     }
 
+    // Suma los subtotales de cada producto para obtener el total de la orden
     public void calcularTotal() {
-        double acum = 0.0;
+        double acumulado = 0.0;
         for (DetalleOrden item : getItems()) {
-            acum += item.getSubtotal();
+            acumulado += item.getSubtotal();
         }
-        this.total = acum;
+        this.total = acumulado;
     }
 
     public String getFecha() {
@@ -122,18 +123,6 @@ public class OrdenCompra implements Serializable {
 
     public void setEstado(EstadoOrden estado) {
         this.estado = estado;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof OrdenCompra that)) return false;
-        return Objects.equals(idOrden, that.idOrden);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(idOrden);
     }
 
     @Override

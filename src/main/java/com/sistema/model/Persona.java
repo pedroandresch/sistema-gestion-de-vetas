@@ -1,14 +1,7 @@
 package com.sistema.model;
 
-import java.io.Serializable;
-import java.util.Objects;
-
-/**
- * Superclase abstracta Persona.
- * Aplica el principio de abstracción y herencia para Cliente y Empleado.
- */
-public abstract class Persona implements Serializable {
-    private static final long serialVersionUID = 1L;
+// Clase abstracta base para Cliente y Empleado
+public abstract class Persona {
 
     protected String dpi;
     protected String nombre;
@@ -45,18 +38,6 @@ public abstract class Persona implements Serializable {
 
     public void setDireccion(String direccion) {
         this.direccion = direccion;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Persona persona)) return false;
-        return Objects.equals(dpi, persona.dpi);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(dpi);
     }
 
     @Override

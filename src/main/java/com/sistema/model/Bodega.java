@@ -1,16 +1,9 @@
 package com.sistema.model;
 
-import java.io.Serializable;
-import java.util.Objects;
-
-/**
- * Entidad Bodega.
- */
-public class Bodega implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Bodega {
 
     private String idBodega;
-    private Empleado empleado; // Empleado encargado
+    private Empleado empleado; // Empleado encargado de la bodega
     private int capacidad;
     private String direccion;
 
@@ -54,18 +47,6 @@ public class Bodega implements Serializable {
 
     public void setDireccion(String direccion) {
         this.direccion = direccion;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Bodega bodega)) return false;
-        return Objects.equals(idBodega, bodega.idBodega);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(idBodega);
     }
 
     @Override
