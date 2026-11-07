@@ -45,3 +45,4 @@ public abstract class Persona {
         return nombre + " (DPI: " + dpi + ")";
     }
 }
+// Modulo desarrollado por Persona 1

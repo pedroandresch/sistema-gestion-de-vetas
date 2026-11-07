@@ -36,3 +36,4 @@ public class Cliente extends Persona {
         return getNombre() + " - " + tipo + " (DPI: " + getDpi() + ")";
     }
 }
+// Modulo desarrollado por Persona 1

@@ -238,3 +238,4 @@ public class EmpleadoPanel extends JPanel {
         lblContador.setText(modeloTabla.getRowCount() + " empleados");
     }
 }
+// Modulo desarrollado por Persona 1
