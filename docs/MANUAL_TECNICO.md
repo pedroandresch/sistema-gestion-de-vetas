@@ -1,132 +1,345 @@
-# Manual Técnico del Sistema
+# Manual Técnico de Arquitectura e Implementación
 
 **Sistema**: Control de Inventario y Ventas  
 **Arquitectura**: Modelo - Vista - Controlador (MVC)  
-**Lenguaje**: Java SE (JDK 17 / 21+)  
-**Librerías externas**: 
-- `Google Gson 2.10.1` (Serialización y persistencia JSON)
-- `FlatLaf 3.4` (Estilos y tema visual moderno para Swing)
+**Plataforma**: Java SE (Compatible con JDK 17, 21 LTS y superiores)  
+**Persistencia**: JSON plano (Google Gson 2.10.1 con UTF-8)  
+**Librería Gráfica**: Java Swing + FlatLaf 3.4 (Modern Look and Feel)  
 
 ---
 
-## 1. Estructura del Código y Patrón MVC
+## 1. Arquitectura del Sistema (Patrón MVC)
 
-El sistema está organizado bajo el paquete raíz `com.sistema`:
+El sistema implementa el patrón **Modelo - Vista - Controlador (MVC)** complementado con una **Capa de Persistencia** dedicada:
 
 ```text
-src/main/java/com/sistema/
-├── Main.java                       # Punto de entrada y configuración del tema FlatLaf
-├── model/                          # Entidades del dominio (datos y reglas internas)
-│   ├── Persona.java                # Superclase abstracta (DPI, nombre, dirección)
-│   ├── Cliente.java                # Subclase con fechaNacimiento y TipoCliente
-│   ├── TipoCliente.java            # Enum (REGULAR, VIP)
-│   ├── Empleado.java               # Subclase con idEmpleado, puesto y salario
-│   ├── Producto.java               # Código, nombre, marca y precio
-│   ├── Bodega.java                 # Capacidad física y Empleado encargado
-│   ├── ItemInventario.java         # Renglón de stock de un producto
-│   ├── Inventario.java             # Existencias asociadas a una bodega
-│   ├── DetalleOrden.java           # Renglón de compra (producto, cantidad, subtotal)
-│   ├── OrdenCompra.java            # Cabecera de venta (cliente, items, total, estado)
-│   └── EstadoOrden.java            # Enum (PENDIENTE, COMPLETADA, CANCELADA)
-├── persistence/                    
-│   └── JsonRepository.java         # Lectura y escritura genérica de archivos JSON
-├── controller/                     
-│   └── SistemaController.java      # Validaciones, colecciones en memoria y lógica comercial
-└── view/                           # Interfaz gráfica en Java Swing
-    ├── MainFrame.java              # Ventana principal con barra lateral y CardLayout
-    ├── UITheme.java                # Colores, fuentes y componentes estilizados
-    ├── DashboardPanel.java         # Panel con métricas de ventas, stock y clientes
-    ├── ProductoPanel.java          # Mantenimiento de catálogo de productos
-    ├── ClientePanel.java           # Registro y búsqueda de clientes
-    ├── EmpleadoPanel.java          # Registro de empleados
-    ├── BodegaPanel.java            # Registro de bodegas
-    ├── InventarioPanel.java        # Entrada de stock por bodega con barra de capacidad
-    └── OrdenCompraPanel.java       # Carrito de facturación e historial de órdenes
+       ┌────────────────────────┐
+       │     VISTA (Swing)      │
+       │ (Paneles y Formularios)│
+       └───────────┬────────────┘
+                   │ Eventos de Usuario (ActionListener, etc.)
+                   ▼
+       ┌────────────────────────┐
+       │      CONTROLADOR       │ ◄─────── Reglas de negocio y validación
+       │  (SistemaController)   │
+       └─────┬────────────┬─────┘
+             │            │
+  Actualiza  │            │ Persiste listas en JSON
+             ▼            ▼
+┌──────────────────┐ ┌───────────────────────┐
+│  MODELO (Entidades)│ │    PERSISTENCIA       │
+│ (Objetos POO)    │ │ (JsonRepository / Gson)│
+└──────────────────┘ └───────────────────────┘
 ```
 
-### Flujo de Trabajo entre Capas
-1. **La Vista (`view`)**: Captura la interacción del usuario (botones, tablas, formularios). Nunca lee ni escribe archivos directamente. Cuando el usuario realiza una acción, la vista llama a un método del `SistemaController`.
-2. **El Controlador (`controller`)**: Valida reglas de negocio (ej. que haya espacio libre en la bodega o que el producto no esté duplicado), actualiza las listas en memoria y coordina la persistencia.
-3. **El Modelo (`model`)**: Contiene los datos y la lógica atómica (como calcular subtotales).
-4. **La Persistencia (`persistence`)**: `JsonRepository` convierte las listas de Java a archivos `.json` en la carpeta `data/` usando la librería Gson.
+### 1.1. Responsabilidades Técnicas por Capa
+
+#### 1. Capa de Modelo (`com.sistema.model`)
+* Contiene las entidades puras del negocio: `Persona`, `Cliente`, `Empleado`, `Producto`, `Bodega`, `Inventario`, `ItemInventario`, `OrdenCompra` y `DetalleOrden`.
+* **Aislamiento**: No posee dependencias de interfaz gráfica (`javax.swing.*`) ni de persistencia (`com.google.gson.*`).
+* Encapsula su lógica interna mediante constructores sobrecargados, métodos accesores/mutadores y autocalculos (como el subtotal de detalle y total de orden).
+
+#### 2. Capa de Vista (`com.sistema.view`)
+* Construida mediante componentes estándar de `javax.swing` y `java.awt`, orquestados mediante un layout principal `CardLayout` dentro de `MainFrame.java`.
+* **Event Dispatch Thread (EDT)**: Todas las vistas y diálogos modales se ejecutan dentro del hilo EDT mediante `SwingUtilities.invokeLater()` en `Main.java` para prevenir condiciones de carrera y congelamientos de interfaz.
+* **Separación de responsabilidades**: Las vistas no realizan validaciones de unicidad ni calculan stock; capturan los datos de los formularios y delegan la ejecución al `SistemaController`.
+
+#### 3. Capa de Controlador (`com.sistema.controller`)
+* Clase central: `SistemaController.java`.
+* Mantiene en memoria las colecciones principales en estructuras `List<T>` (`ArrayList`):
+  * `List<Producto> productos`
+  * `List<Cliente> clientes`
+  * `List<Empleado> empleados`
+  * `List<Bodega> bodegas`
+  * `List<Inventario> inventarios`
+  * `List<OrdenCompra> ordenes`
+* Ejecuta las validaciones de unicidad (DPI, códigos de producto, bodegas), el control de capacidad física y la transacción de descuento de inventario.
+
+#### 4. Capa de Persistencia (`com.sistema.persistence`)
+* Clase utilitaria: `JsonRepository.java`.
+* Utiliza una instancia estática de `Gson` configurada con `setPrettyPrinting()` para generar archivos legibles en disco bajo el directorio `data/`.
+* Utiliza `StandardCharsets.UTF_8` en todos los flujos `FileReader` y `FileWriter` para garantizar compatibilidad multiplataforma entre Windows, macOS y Linux sin corrupción de tildes o caracteres especiales.
 
 ---
 
-## 2. Reglas de Negocio Implementadas
+## 2. Sistema de Diseño y Tema Visual (`UITheme.java`)
 
-### 2.1. Control de Capacidad Máxima de Bodegas
-En `SistemaController.registrarStock(...)`:
-* Cada bodega tiene una capacidad máxima en unidades (ej. 500).
-* Antes de ingresar un nuevo lote, el sistema suma las existencias actuales de todos los productos en esa bodega (`getTotalUnidadesAlmacenadas()`).
-* Si la suma de las existencias actuales más la nueva cantidad supera el límite, el sistema rechaza el ingreso, lanza una excepción y muestra cuántas unidades libres quedan:
-  $$\text{Espacio Disponible} = \text{Capacidad} - \text{Ocupación Actual}$$
+La interfaz visual utiliza la librería **FlatLaf 3.4**, la cual reemplaza los estilos arcaicos de Swing por componentes vectoriales limpios inspirados en interfaces modernas:
 
-### 2.2. Algoritmo de Descuento de Stock en Dos Fases
-Para evitar errores donde se descuenta un producto pero otro no tiene existencias, el método `completarOrden(idOrden)` en `SistemaController` opera en dos fases estrictas:
+```java
+// Inicializacion en Main.java
+FlatLightLaf.setup();
+UIManager.put("Button.arc", 8);
+UIManager.put("Component.arc", 8);
+UIManager.put("TextComponent.arc", 8);
+```
 
-* **Fase 1 (Verificación completa previa)**:  
-  Recorre todos los productos del carrito. Si **tan solo uno** de los productos no tiene stock suficiente en la bodega de despacho, el proceso se aborta de inmediato con una alerta clara y **no se descuenta absolutamente nada**.
-* **Fase 2 (Descuento y confirmación)**:  
-  Habiendo verificado que hay existencias para el 100% del pedido, se procede a descontar las unidades de la bodega, se cambia el estado de la orden a `COMPLETADA` y se guardan los cambios en `data/inventarios.json` y `data/ordenes.json`.
+### 2.1. Tokens de Color y Tipografía en `UITheme.java`
 
----
+| Token | Código Hex / RGB | Uso en el Sistema |
+| :--- | :--- | :--- |
+| `FONDO_MENU` | `#0F172A` / `rgb(15, 23, 42)` | Fondo del menú lateral de navegación (Slate 900). |
+| `MENU_ACTIVO` | `#334155` / `rgb(51, 65, 85)` | Fondo del botón del módulo actualmente seleccionado. |
+| `FONDO_PRINCIPAL` | `#F4F7FB` / `rgb(244, 247, 251)` | Fondo del área de trabajo y paneles de contenido. |
+| `COLOR_PRIMARIO` | `#2563EB` / `rgb(37, 99, 235)` | Botones de acción principal (Guardar, Buscar). |
+| `COLOR_EXITO` | `#10B981` / `rgb(16, 185, 129)` | Botón "Completar Venta" e indicadores de alta disponibilidad. |
+| `COLOR_PELIGRO` | `#DC2626` / `rgb(220, 38, 38)` | Botones de eliminación y alertas de sobrecupo. |
+| `COLOR_ADVERTENCIA`| `#D97706` / `rgb(217, 119, 6)` | Estados `PENDIENTE` e indicadores de stock bajo. |
 
-## 3. Almacenamiento y Estructura JSON (`data/`)
-
-Los datos se guardan en formato JSON plano con codificación UTF-8:
-
-* `data/productos.json`: Catálogo de artículos con código, nombre, descripción, marca y precio.
-* `data/clientes.json`: Clientes con DPI, nombre, dirección, fecha y tipo (`REGULAR` o `VIP`).
-* `data/empleados.json`: Nómina con ID, DPI, nombre, puesto y salario mensual.
-* `data/bodegas.json`: Sedes con capacidad y objeto del empleado encargado.
-* `data/inventarios.json`: Lista de existencias agrupadas por `idBodega`.
-* `data/ordenes.json`: Historial de ventas con cliente, items, fecha, total y estado (`PENDIENTE`, `COMPLETADA`, `CANCELADA`).
+* **Propiedades de Cliente FlatLaf**: Los paneles de tarjetas utilizan `componente.putClientProperty(FlatClientProperties.STYLE, "arc: 12")` para renderizar esquinas redondeadas suaves con borde compuesto.
 
 ---
 
-## 4. Guía de Ejecución y Compilación
+## 3. Diccionario de Datos y Esquemas JSON (`data/`)
 
-### 4.1. Opción 1: Con los scripts automáticos (Recomendado)
+Los datos se guardan en 6 archivos JSON planos en el directorio `data/`:
 
-* **En Windows**: Haz doble clic en `run.bat` o ejecútalo desde CMD/PowerShell:
+### 3.1. `data/productos.json`
+```json
+[
+  {
+    "codigo": "PROD-001",
+    "nombre": "Laptop HP Pavilion 15",
+    "descripcion": "Intel Core i5, 16GB RAM, 512GB SSD",
+    "marca": "HP",
+    "precio": 5200.0
+  }
+]
+```
+* `codigo` (`String`, Obligatorio, Único): Clave primaria alfanumérica.
+* `nombre` (`String`, Obligatorio): Nombre descriptivo del producto.
+* `descripcion` (`String`, Opcional): Características técnicas.
+* `marca` (`String`, Obligatorio): Marca del fabricante.
+* `precio` (`double`, Obligatorio): Valor monetario positivo en Quetzales ($> 0.0$).
+
+### 3.2. `data/clientes.json`
+```json
+[
+  {
+    "fechaNacimiento": "1994-06-22",
+    "tipo": "VIP",
+    "dpi": "2541896320101",
+    "nombre": "Carlos Estuardo Gómez",
+    "direccion": "Zona 10, Ciudad de Guatemala"
+  }
+]
+```
+* `dpi` (`String`, Obligatorio, Único): Documento Personal de Identificación (13 dígitos).
+* `nombre` (`String`, Obligatorio): Nombre y apellidos completos.
+* `direccion` (`String`, Obligatorio): Domicilio fiscal o residencial.
+* `fechaNacimiento` (`String`, Obligatorio): Formato `AAAA-MM-DD`.
+* `tipo` (`String`, Obligatorio): Valor enum exacto: `"REGULAR"` o `"VIP"`.
+
+### 3.3. `data/empleados.json`
+```json
+[
+  {
+    "idEmpleado": "EMP-01",
+    "puesto": "Encargado de Bodega Central",
+    "salario": 4500.0,
+    "dpi": "1985472130101",
+    "nombre": "Manuel Antonio Rivera",
+    "direccion": "Zona 7, Mixco"
+  }
+]
+```
+* `idEmpleado` (`String`, Obligatorio, Único): Código laboral interno.
+* `dpi` (`String`, Obligatorio, Único): Identificación civil no duplicable.
+* `puesto` (`String`, Obligatorio): Cargo dentro de la organización.
+* `salario` (`double`, Obligatorio): Salario mensual en Quetzales ($> 0.0$).
+
+### 3.4. `data/bodegas.json`
+```json
+[
+  {
+    "idBodega": "BOD-01",
+    "nombre": "Bodega Central Mixco",
+    "direccion": "Km 15 Calzada Roosevelt",
+    "capacidad": 500,
+    "encargado": {
+      "idEmpleado": "EMP-01",
+      "puesto": "Encargado de Bodega Central",
+      "salario": 4500.0,
+      "dpi": "1985472130101",
+      "nombre": "Manuel Antonio Rivera",
+      "direccion": "Zona 7, Mixco"
+    }
+  }
+]
+```
+* `idBodega` (`String`, Obligatorio, Único): Clave primaria de la sede.
+* `capacidad` (`int`, Obligatorio): Capacidad total en unidades enteras ($> 0$).
+* `encargado` (`Object`, Obligatorio): Objeto serializado del empleado responsable (Agregación).
+
+### 3.5. `data/inventarios.json`
+```json
+[
+  {
+    "idBodega": "BOD-01",
+    "items": [
+      {
+        "producto": {
+          "codigo": "PROD-001",
+          "nombre": "Laptop HP Pavilion 15",
+          "descripcion": "Intel Core i5, 16GB RAM",
+          "marca": "HP",
+          "precio": 5200.0
+        },
+        "stock": 45
+      }
+    ]
+  }
+]
+```
+* `idBodega` (`String`, Obligatorio): Llave de relación foránea con `bodegas.json`.
+* `items` (`Array<ItemInventario>`): Lista de productos almacenados y su existencia actual ($\text{stock} \ge 0$).
+
+### 3.6. `data/ordenes.json`
+```json
+[
+  {
+    "idOrden": "ORD-01",
+    "cliente": {
+      "fechaNacimiento": "1994-06-22",
+      "tipo": "VIP",
+      "dpi": "2541896320101",
+      "nombre": "Carlos Estuardo Gómez",
+      "direccion": "Zona 10"
+    },
+    "idBodega": "BOD-01",
+    "items": [
+      {
+        "producto": {
+          "codigo": "PROD-001",
+          "nombre": "Laptop HP Pavilion 15",
+          "marca": "HP",
+          "precio": 5200.0
+        },
+        "cantidad": 2,
+        "precioUnitario": 5200.0,
+        "subtotal": 10400.0
+      }
+    ],
+    "fecha": "2026-11-06 21:30:00",
+    "total": 10400.0,
+    "estado": "COMPLETADA"
+  }
+]
+```
+
+---
+
+## 4. Algoritmos Críticos del Negocio
+
+### 4.1. Algoritmo de Control de Capacidad Máxima de Almacén
+Ubicado en `SistemaController.registrarStock(String idBodega, Producto producto, int cantidad)`:
+
+1. **Precondición**: Valida que $\text{cantidad} > 0$.
+2. **Cálculo de Ocupación Acumulada**:
+   $$\text{Ocupación Actual} = \sum_{i=1}^{n} \text{item}_i.\text{stock}$$
+3. **Verificación de Límite**:
+   $$\text{Ocupación Proyectada} = \text{Ocupación Actual} + \text{cantidad}$$
+   Si $\text{Ocupación Proyectada} > \text{bodega}.\text{capacidad}$:
+   * Se interrumpe la ejecución mediante el lanzamiento de una excepción descriptiva:
+     ```java
+     int espacioDisponible = bodega.getCapacidad() - totalActual;
+     throw new Exception("Capacidad excedida en bodega " + idBodega + 
+                         ". Espacio restante: " + espacioDisponible + " unidades.");
+     ```
+4. **Mutación y Persistencia**: Si hay espacio, se invoca `inventario.registrarOActualizarStock(producto, cantidad)` y se guardan los datos en `data/inventarios.json`.
+
+---
+
+### 4.2. Algoritmo Transaccional en Dos Fases para Descuento de Stock
+Ubicado en `SistemaController.completarOrden(String idOrden)`:
+
+Para garantizar la consistencia de datos (evitar que una orden descuente parcialmente existencias si falta un producto), se implementa un mecanismo análogo al *Two-Phase Commit (2PC)*:
+
+```java
+// ========================================================
+// FASE 1: VERIFICACION PREVENTIVA COMPLETA (Read-Only)
+// ========================================================
+Inventario inventario = obtenerOCrearInventario(orden.getIdBodega());
+
+for (DetalleOrden detalle : orden.getItems()) {
+    String codigoProd = detalle.getProducto().getCodigo();
+    int stockDisponible = inventario.obtenerStock(codigoProd);
+    
+    // Si tan solo un producto no alcanza, aborta la transaccion
+    if (stockDisponible < detalle.getCantidad()) {
+        throw new Exception("Stock insuficiente en bodega " + orden.getIdBodega() + 
+                            " para el producto: " + detalle.getProducto().getNombre() + 
+                            ". Disponible: " + stockDisponible + 
+                            ", Solicitado: " + detalle.getCantidad());
+    }
+}
+
+// ========================================================
+// FASE 2: DEDUCCION EFECTIVA Y PERSISTENCIA (Commit)
+// ========================================================
+// Habiendo garantizado que el 100% de los items estan disponibles:
+for (DetalleOrden detalle : orden.getItems()) {
+    inventario.descontarStock(detalle.getProducto().getCodigo(), detalle.getCantidad());
+}
+
+orden.setEstado(EstadoOrden.COMPLETADA);
+
+// Persistencia atomica en disco
+JsonRepository.guardar(RUTA_INVENTARIOS, this.inventarios);
+JsonRepository.guardar(RUTA_ORDENES, this.ordenes);
+```
+
+* **Garantía Técnica**: Si la Fase 1 falla, ninguna variable en memoria cambia y ningún archivo en disco es sobrescrito. La orden permanece en su estado anterior.
+
+---
+
+## 5. Análisis de Complejidad Computacional (Big-O)
+
+| Operación | Método en `SistemaController` | Estructura de Datos | Complejidad Temporal | Justificación |
+| :--- | :--- | :--- | :---: | :--- |
+| Buscar Producto | `buscarProducto(codigo)` | `List<Producto>` | $O(N)$ | Búsqueda lineal secuencial por código. |
+| Buscar Cliente | `buscarCliente(dpi)` | `List<Cliente>` | $O(C)$ | Recorrido lineal comparando DPIs. |
+| Verificar Capacidad | `registrarStock(...)` | `List<ItemInventario>` | $O(M)$ | Sumatoria de existencias de los $M$ items de la bodega. |
+| Descuento en 2 Fases | `completarOrden(...)` | $K$ items en orden, $M$ en bodega | $O(K \times M)$ | Por cada item del carrito ($K$), busca el stock en la bodega ($M$). Para tamaños habituales ($K < 50, M < 1000$), la ejecución toma $< 1$ ms. |
+| Persistencia a Disco | `JsonRepository.guardar(...)` | Archivo I/O | $O(N)$ | Serialización lineal del árbol de objetos a texto JSON. |
+
+---
+
+## 6. Procedimientos de Compilación y Ejecución
+
+### 6.1. Ejecución con Scripts
+
+* **Windows**:
   ```cmd
   run.bat
   ```
-* **En macOS / Linux**:
+  *(El script detecta la ruta local `%~dp0`, verifica la presencia de `javac` / `java`, compila con codificación UTF-8 hacia `bin/` y ejecuta `com.sistema.Main` con el classpath adecuado).*
+
+* **macOS / Linux**:
   ```bash
   chmod +x run.sh
   ./run.sh
   ```
 
----
+### 6.2. Compilación Manual por Terminal
 
-### 4.2. Opción 2: Desde NetBeans
-1. Abre NetBeans y selecciona **File ➔ Open Project**.
-2. Selecciona la carpeta `sistema-gestion-ventas` (la reconocerá automáticamente con el ícono de Maven).
-3. Haz clic derecho sobre el proyecto y elige **Clean and Build**.
-4. Haz clic derecho sobre `src/main/java/com/sistema/Main.java` y selecciona **Run File** (o `Shift + F6`).
-
----
-
-### 4.3. Opción 3: Desde Visual Studio Code
-1. Abre la carpeta del proyecto en VS Code.
-2. Asegúrate de tener instalada la extensión oficial **Extension Pack for Java**.
-3. Abre el archivo `Main.java` y haz clic en el botón **Run** que aparece arriba del método `main`.
-
----
-
-### 4.4. Opción 4: Compilación manual por terminal
-
-**En Windows (CMD):**
+**Windows (CMD / PowerShell)**:
 ```cmd
 if not exist "bin" mkdir bin
 javac -cp "lib/*" -encoding UTF-8 -d bin src/main/java/com/sistema/model/*.java src/main/java/com/sistema/persistence/*.java src/main/java/com/sistema/controller/*.java src/main/java/com/sistema/view/*.java src/main/java/com/sistema/*.java
 java -cp "bin;lib/*" com.sistema.Main
 ```
 
-**En macOS / Linux:**
+**macOS / Linux (zsh / bash)**:
 ```bash
 mkdir -p bin
 javac -cp "lib/*" -encoding UTF-8 -d bin $(find src/main/java -name "*.java")
 java -cp "bin:lib/*" com.sistema.Main
 ```
+
+### 6.3. Construcción y Empaquetado Maven
+```bash
+mvn clean package
+java -jar target/sistema-gestion-ventas-1.0.0-jar-with-dependencies.jar
+```
+*(El archivo `pom.xml` utiliza el plugin `maven-assembly-plugin` para generar un `.jar` independiente con FlatLaf y Gson empaquetados dentro).*
