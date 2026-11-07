@@ -1,16 +1,23 @@
 [
   {
+    "fechaNacimiento": "1992-05-14",
+    "tipo": "VIP",
     "dpi": "2541896320101",
     "nombre": "Carlos Estuardo Gómez",
-    "direccion": "Zona 10, Ciudad de Guatemala",
-    "fechaNacimiento": "1992-05-14",
-    "tipo": "VIP"
+    "direccion": "Zona 10, Ciudad de Guatemala"
   },
   {
+    "fechaNacimiento": "1998-11-20",
+    "tipo": "REGULAR",
     "dpi": "1894563210101",
     "nombre": "María Fernanda López",
-    "direccion": "Zona 14, Ciudad de Guatemala",
-    "fechaNacimiento": "1998-11-20",
-    "tipo": "REGULAR"
+    "direccion": "Zona 14, Ciudad de Guatemala"
+  },
+  {
+    "fechaNacimiento": "12-10-2005",
+    "tipo": "VIP",
+    "dpi": "25352326536325326533",
+    "nombre": "SSharon",
+    "direccion": "san pedro"
   }
 ]

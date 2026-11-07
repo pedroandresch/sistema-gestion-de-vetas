@@ -1,98 +1,176 @@
 package com.sistema.view;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.sistema.controller.SistemaController;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainFrame extends JFrame {
 
-    private final SistemaController controller;
+    private SistemaController controlador;
 
-    private ProductoPanel productoPanel;
-    private ClientePanel clientePanel;
-    private EmpleadoPanel empleadoPanel;
-    private BodegaPanel bodegaPanel;
-    private InventarioPanel inventarioPanel;
-    private OrdenCompraPanel ordenCompraPanel;
+    private CardLayout disenoTarjetas;
+    private JPanel panelContenido;
+    private List<JButton> botonesMenu;
+
+    private DashboardPanel panelDashboard;
+    private ProductoPanel panelProductos;
+    private ClientePanel panelClientes;
+    private EmpleadoPanel panelEmpleados;
+    private BodegaPanel panelBodegas;
+    private InventarioPanel panelInventario;
+    private OrdenCompraPanel panelOrdenes;
 
     public MainFrame() {
-        this.controller = new SistemaController();
-        initComponents();
+        this.controlador = new SistemaController();
+        this.botonesMenu = new ArrayList<>();
+        iniciarComponentes();
     }
 
-    private void initComponents() {
-        setTitle("Sistema de Gestión de Inventario y Ventas - POO");
+    private void iniciarComponentes() {
+        // Configuracion basica de la ventana principal
+        setTitle("Sistema de Gestión de Inventario y Ventas");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1100, 720);
-        setMinimumSize(new Dimension(950, 600));
+        setSize(1240, 780);
+        setMinimumSize(new Dimension(1050, 680));
         setLocationRelativeTo(null);
 
-        // Encabezado
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(24, 32, 44));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
+        JPanel panelPrincipal = new JPanel(new BorderLayout());
+        panelPrincipal.setBackground(UITheme.FONDO_PRINCIPAL);
 
-        JLabel titleLabel = new JLabel("Sistema de Gestión de Inventario y Ventas");
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+        // Configuracion del panel lateral de navegacion
+        JPanel menuLateral = new JPanel(new BorderLayout());
+        menuLateral.setPreferredSize(new Dimension(240, getHeight()));
+        menuLateral.setBackground(UITheme.FONDO_MENU);
+        menuLateral.setBorder(BorderFactory.createEmptyBorder(24, 16, 24, 16));
 
-        JLabel subLabel = new JLabel("Arquitectura POO • Persistencia JSON • Swing");
-        subLabel.setForeground(new Color(176, 190, 197));
-        subLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        JPanel panelMarca = new JPanel(new BorderLayout(8, 4));
+        panelMarca.setOpaque(false);
+        panelMarca.setBorder(BorderFactory.createEmptyBorder(0, 8, 24, 8));
 
-        headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(subLabel, BorderLayout.EAST);
+        JLabel lblTituloMarca = new JLabel("INVENTARIO Y VENTAS");
+        lblTituloMarca.setFont(new Font("SansSerif", Font.BOLD, 15));
+        lblTituloMarca.setForeground(Color.WHITE);
 
-        add(headerPanel, BorderLayout.NORTH);
+        JLabel lblSubtituloMarca = new JLabel("Control y Facturación");
+        lblSubtituloMarca.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        lblSubtituloMarca.setForeground(UITheme.TEXTO_GRIS_MENU);
 
-        // Pestañas de módulos
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(new Font("SansSerif", Font.BOLD, 13));
+        panelMarca.add(lblTituloMarca, BorderLayout.NORTH);
+        panelMarca.add(lblSubtituloMarca, BorderLayout.SOUTH);
+        menuLateral.add(panelMarca, BorderLayout.NORTH);
 
-        productoPanel = new ProductoPanel(controller);
-        clientePanel = new ClientePanel(controller);
-        empleadoPanel = new EmpleadoPanel(controller);
-        bodegaPanel = new BodegaPanel(controller);
-        inventarioPanel = new InventarioPanel(controller);
-        ordenCompraPanel = new OrdenCompraPanel(controller);
+        // Botones para cambiar entre los modulos del sistema
+        JPanel listaBotones = new JPanel(new GridLayout(7, 1, 0, 6));
+        listaBotones.setOpaque(false);
 
-        tabbedPane.addTab("📦 Productos", productoPanel);
-        tabbedPane.addTab("👥 Clientes", clientePanel);
-        tabbedPane.addTab("👔 Empleados", empleadoPanel);
-        tabbedPane.addTab("🏢 Bodegas", bodegaPanel);
-        tabbedPane.addTab("📊 Inventario", inventarioPanel);
-        tabbedPane.addTab("🛒 Órdenes de Compra", ordenCompraPanel);
+        JButton btnDash = crearBotonMenu("Panel General", "DASHBOARD");
+        JButton btnProd = crearBotonMenu("Productos", "PRODUCTOS");
+        JButton btnCli  = crearBotonMenu("Clientes", "CLIENTES");
+        JButton btnEmp  = crearBotonMenu("Empleados", "EMPLEADOS");
+        JButton btnBod  = crearBotonMenu("Bodegas", "BODEGAS");
+        JButton btnInv  = crearBotonMenu("Inventario", "INVENTARIO");
+        JButton btnOrd  = crearBotonMenu("Órdenes de Compra", "ORDENES");
 
-        // Al cambiar de pestaña, refrescar datos dependientes
-        tabbedPane.addChangeListener(e -> {
-            int selectedIndex = tabbedPane.getSelectedIndex();
-            switch (selectedIndex) {
-                case 3 -> { // Bodegas
-                    bodegaPanel.recargarEmpleadosCombo();
-                    bodegaPanel.recargarTabla();
-                }
-                case 4 -> { // Inventario
-                    inventarioPanel.recargarCombos();
-                    inventarioPanel.recargarTabla();
-                }
-                case 5 -> { // Órdenes
-                    ordenCompraPanel.recargarCombos();
-                    ordenCompraPanel.recargarTablaOrdenes();
-                }
-            }
+        listaBotones.add(btnDash);
+        listaBotones.add(btnProd);
+        listaBotones.add(btnCli);
+        listaBotones.add(btnEmp);
+        listaBotones.add(btnBod);
+        listaBotones.add(btnInv);
+        listaBotones.add(btnOrd);
+
+        menuLateral.add(listaBotones, BorderLayout.CENTER);
+        panelPrincipal.add(menuLateral, BorderLayout.WEST);
+
+        // Contenedor central con CardLayout para mostrar cada modulo
+        disenoTarjetas = new CardLayout();
+        panelContenido = new JPanel(disenoTarjetas);
+        panelContenido.setBackground(UITheme.FONDO_PRINCIPAL);
+
+        panelDashboard = new DashboardPanel(controlador);
+        panelProductos = new ProductoPanel(controlador);
+        panelClientes = new ClientePanel(controlador);
+        panelEmpleados = new EmpleadoPanel(controlador);
+        panelBodegas = new BodegaPanel(controlador);
+        panelInventario = new InventarioPanel(controlador);
+        panelOrdenes = new OrdenCompraPanel(controlador);
+
+        panelContenido.add(panelDashboard, "DASHBOARD");
+        panelContenido.add(panelProductos, "PRODUCTOS");
+        panelContenido.add(panelClientes, "CLIENTES");
+        panelContenido.add(panelEmpleados, "EMPLEADOS");
+        panelContenido.add(panelBodegas, "BODEGAS");
+        panelContenido.add(panelInventario, "INVENTARIO");
+        panelContenido.add(panelOrdenes, "ORDENES");
+
+        panelPrincipal.add(panelContenido, BorderLayout.CENTER);
+        add(panelPrincipal);
+
+        marcarBotonActivo(btnDash);
+    }
+
+    private JButton crearBotonMenu(String texto, String nombreVista) {
+        JButton boton = new JButton(texto);
+        boton.setFont(new Font("SansSerif", Font.BOLD, 13));
+        boton.setForeground(UITheme.TEXTO_MENU);
+        boton.setBackground(UITheme.FONDO_MENU);
+        boton.setHorizontalAlignment(SwingConstants.LEFT);
+        boton.setFocusPainted(false);
+        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        boton.putClientProperty(FlatClientProperties.STYLE, "arc: 8; borderWidth: 0");
+        boton.setBorder(BorderFactory.createEmptyBorder(8, 17, 8, 14));
+
+        boton.addActionListener(e -> {
+            marcarBotonActivo(boton);
+            actualizarVistaSeleccionada(nombreVista);
+            disenoTarjetas.show(panelContenido, nombreVista);
         });
 
-        add(tabbedPane, BorderLayout.CENTER);
+        botonesMenu.add(boton);
+        return boton;
+    }
 
-        // Barra de estado inferior
-        JPanel statusBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 6));
-        statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(200, 200, 200)));
-        JLabel lblStatus = new JLabel("Sistema listo • Datos sincronizados con carpeta /data");
-        lblStatus.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        lblStatus.setForeground(Color.GRAY);
-        statusBar.add(lblStatus);
+    // Resaltar el boton del modulo que esta activo actualmente
+    private void marcarBotonActivo(JButton botonActivo) {
+        for (JButton b : botonesMenu) {
+            if (b == botonActivo) {
+                b.setBackground(UITheme.MENU_ACTIVO);
+                b.setForeground(Color.WHITE);
+                b.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createMatteBorder(0, 3, 0, 0, UITheme.COLOR_PRIMARIO),
+                        BorderFactory.createEmptyBorder(8, 14, 8, 14)
+                ));
+            } else {
+                b.setBackground(UITheme.FONDO_MENU);
+                b.setForeground(UITheme.TEXTO_MENU);
+                b.setBorder(BorderFactory.createEmptyBorder(8, 17, 8, 14));
+            }
+        }
+    }
 
-        add(statusBar, BorderLayout.SOUTH);
+    // Recargar las tablas y combos cuando el usuario cambia de modulo
+    private void actualizarVistaSeleccionada(String nombreVista) {
+        if (nombreVista.equals("DASHBOARD")) {
+            panelDashboard.actualizarMetricas();
+        } else if (nombreVista.equals("PRODUCTOS")) {
+            panelProductos.recargarTabla();
+        } else if (nombreVista.equals("CLIENTES")) {
+            panelClientes.recargarTabla();
+        } else if (nombreVista.equals("EMPLEADOS")) {
+            panelEmpleados.recargarTabla();
+        } else if (nombreVista.equals("BODEGAS")) {
+            panelBodegas.recargarEmpleadosCombo();
+            panelBodegas.recargarTabla();
+        } else if (nombreVista.equals("INVENTARIO")) {
+            panelInventario.recargarCombos();
+            panelInventario.recargarTabla();
+        } else if (nombreVista.equals("ORDENES")) {
+            panelOrdenes.recargarCombos();
+            panelOrdenes.recargarTablaOrdenes();
+        }
     }
 }

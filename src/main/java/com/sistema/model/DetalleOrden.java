@@ -1,12 +1,6 @@
 package com.sistema.model;
 
-import java.io.Serializable;
-
-/**
- * Detalle o renglón de una orden de compra (Producto + Cantidad + Subtotal).
- */
-public class DetalleOrden implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class DetalleOrden {
 
     private Producto producto;
     private int cantidad;

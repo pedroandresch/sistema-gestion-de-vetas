@@ -14,17 +14,19 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mainClass>com.sistema.Main</mainClass>
+        <exec.mainClass>com.sistema.Main</exec.mainClass>
     </properties>
 
     <dependencies>
-        <!-- Google Gson para persistencia limpia en JSON -->
+        <!-- Google Gson para serializacion y persistencia en JSON -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
         </dependency>
 
-        <!-- FlatLaf para interfaz Swing moderna y limpia -->
+        <!-- FlatLaf para la interfaz grafica en Java Swing -->
         <dependency>
             <groupId>com.formdev</groupId>
             <artifactId>flatlaf</artifactId>
@@ -34,6 +36,15 @@
 
     <build>
         <plugins>
+            <!-- Plugin de ejecucion estandar para NetBeans y Maven -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>com.sistema.Main</mainClass>
+                </configuration>
+            </plugin>
             <!-- Plugin para empaquetar un JAR ejecutable con dependencias -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
