@@ -1,13 +1,6 @@
 package com.sistema.model;
 
-import java.io.Serializable;
-import java.util.Objects;
-
-/**
- * Entidad Producto.
- */
-public class Producto implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Producto {
 
     private String codigo;
     private String nombre;
@@ -64,18 +57,6 @@ public class Producto implements Serializable {
 
     public void setPrecio(double precio) {
         this.precio = precio;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Producto producto)) return false;
-        return Objects.equals(codigo, producto.codigo);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(codigo);
     }
 
     @Override

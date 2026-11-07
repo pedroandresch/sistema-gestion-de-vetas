@@ -1,9 +1,7 @@
 package com.sistema.model;
 
-/**
- * Entidad Cliente. Hereda de Persona.
- */
 public class Cliente extends Persona {
+
     private String fechaNacimiento;
     private TipoCliente tipo;
 

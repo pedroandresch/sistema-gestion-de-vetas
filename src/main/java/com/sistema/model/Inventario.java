@@ -1,16 +1,9 @@
 package com.sistema.model;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-/**
- * Inventario de una bodega específica.
- * Contiene la lista de productos y la cantidad por producto (stock).
- */
-public class Inventario implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Inventario {
 
     private String idBodega;
     private List<ItemInventario> items;
@@ -43,9 +36,7 @@ public class Inventario implements Serializable {
         this.items = items;
     }
 
-    /**
-     * Registra o actualiza el stock de un producto en este inventario.
-     */
+    // Si el producto ya existe suma al stock, si no lo agrega a la lista
     public void registrarOActualizarStock(Producto producto, int cantidad) {
         for (ItemInventario item : getItems()) {
             if (item.getProducto().getCodigo().equalsIgnoreCase(producto.getCodigo())) {
@@ -56,9 +47,6 @@ public class Inventario implements Serializable {
         getItems().add(new ItemInventario(producto, cantidad));
     }
 
-    /**
-     * Obtiene el stock disponible de un producto.
-     */
     public int obtenerStock(String codigoProducto) {
         for (ItemInventario item : getItems()) {
             if (item.getProducto().getCodigo().equalsIgnoreCase(codigoProducto)) {
@@ -68,9 +56,6 @@ public class Inventario implements Serializable {
         return 0;
     }
 
-    /**
-     * Descuenta stock de un producto si hay suficiente existencia.
-     */
     public boolean descontarStock(String codigoProducto, int cantidad) {
         for (ItemInventario item : getItems()) {
             if (item.getProducto().getCodigo().equalsIgnoreCase(codigoProducto)) {
@@ -80,26 +65,12 @@ public class Inventario implements Serializable {
         return false;
     }
 
-    /**
-     * Devuelve la cantidad total de unidades almacenadas en la bodega.
-     */
+    // Suma todas las unidades almacenadas en esta bodega
     public int getTotalUnidadesAlmacenadas() {
         int total = 0;
         for (ItemInventario item : getItems()) {
             total += item.getStock();
         }
         return total;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Inventario that)) return false;
-        return Objects.equals(idBodega, that.idBodega);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(idBodega);
     }
 }
